@@ -92,14 +92,22 @@ func (v *treeVisitor) Exit(cur *tree.Node, stack []*tree.Node) (err error) {
 	return
 }
 
+type navigation struct {
+	Name string
+	Path string
+}
+
 type pageTemplateData struct {
 	HTMLContent template.HTML
+	Navigations []navigation
 }
 
 type parsedDocument struct {
 	tree       *tree.Tree
 	content    string
 	outputPath string
+	// The path of doc relative to the root
+	outputDocPath string
 }
 
 type meshdocConfig struct {
@@ -170,12 +178,16 @@ func (m *Meshdoc) Run() (err error) {
 			continue
 		}
 
-		filePath := path.Join(m.config.SourcePath, info.Name())
+		// FIXME: not always a file name, can be in a subdirectory
+		docPath := info.Name()
+
+		filePath := path.Join(m.config.SourcePath, docPath)
 		log.Printf("Parsing %s\n", filePath)
 
-		outputPath := path.Join(m.config.OutputPath, info.Name())
-		outputPath = strings.TrimSuffix(outputPath, path.Ext(outputPath))
-		outputPath += ".html"
+		outDocPath := strings.TrimSuffix(docPath, path.Ext(docPath))
+		outDocPath += ".html"
+
+		outputPath := path.Join(m.config.OutputPath, outDocPath)
 
 		var file *os.File
 		file, err = os.Open(filePath)
@@ -199,8 +211,9 @@ func (m *Meshdoc) Run() (err error) {
 		}
 
 		doc := parsedDocument{
-			tree:       parser.Tree(),
-			outputPath: outputPath,
+			tree:          parser.Tree(),
+			outputPath:    outputPath,
+			outputDocPath: outDocPath,
 		}
 
 		buf := bytes.Buffer{}
@@ -210,7 +223,15 @@ func (m *Meshdoc) Run() (err error) {
 		}
 
 		doc.content = buf.String()
-		docByPath[filePath] = doc
+		docByPath[docPath] = doc
+	}
+
+	navigations := []navigation{}
+	for path, doc := range docByPath {
+		navigations = append(navigations, navigation{
+			Name: path, // TODO: should be title
+			Path: doc.outputDocPath,
+		})
 	}
 
 	err = os.MkdirAll(m.config.OutputPath, os.ModePerm)
@@ -227,6 +248,7 @@ func (m *Meshdoc) Run() (err error) {
 		defer outFile.Close()
 		err = pageTmpl.Execute(outFile, &pageTemplateData{
 			HTMLContent: template.HTML(doc.content),
+			Navigations: navigations,
 		})
 		if err != nil {
 			return

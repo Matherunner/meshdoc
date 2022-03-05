@@ -2,11 +2,47 @@
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: lightblue;
+    }
+
+    div.body {
+        margin: 30px auto 0 auto;
+        width: 1000px;
+        position: relative;
+    }
+
+    div.content {
+        background-color: #aaaabb;
+        margin-left: 220px;
+    }
+
+    nav.navigation {
+        background-color: lightgreen;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 220px;
+    }
+</style>
 <title>Test Title</title>
 </head>
 <body>
-<div class="content">
-{{- block "content" . }}{{ end -}}
+<div class="body">
+    <div class="content">
+        {{- block "content" . }}{{ end -}}
+    </div>
+    <nav class="navigation">
+        <ul>
+            {{- range .Navigations }}
+            <li><a href="{{ .Path }}">{{ .Name }}</a></li>
+            {{ end -}}
+        </ul>
+    </nav>
 </div>
 </body>
 </html>
