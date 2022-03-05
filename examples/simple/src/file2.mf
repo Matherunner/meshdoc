@@ -1,0 +1,4 @@
+\TITLE.
+Second File
+
+The first paragraph of the second file.

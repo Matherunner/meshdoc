@@ -1,0 +1,9 @@
+\TITLE.
+First File
+
+First paragraph \E[with\E] \S[some\S] formatting.
+
+\H1.
+First section
+
+First paragraph in the first section.
