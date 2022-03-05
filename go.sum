@@ -1,4 +1,2 @@
 github.com/BurntSushi/toml v1.0.0 h1:dtDWrepsVPfW9H/4y7dDgFc2MBUSeJhlaDtK13CxFlU=
 github.com/BurntSushi/toml v1.0.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
-github.com/Matherunner/meshforce v0.0.0-20220305092136-b03b4aeb0722 h1:QF00FEMFc4zsZC3bCtwG8nLfZwoLY6yLNujFMpZP+4s=
-github.com/Matherunner/meshforce v0.0.0-20220305092136-b03b4aeb0722/go.mod h1:zEhAH8cJVNSNouPMgZ8rOX9tMjrAzNOh8ktaMpV1JQA=
