@@ -1,1 +1,3 @@
-path = "./examples/simple/src"
+sourcePath = "./examples/simple/src"
+templatePath = "./templates/simple"
+outputPath = "./examples/simple/build"

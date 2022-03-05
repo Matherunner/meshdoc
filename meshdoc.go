@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Matherunner/meshforce"
@@ -90,8 +92,20 @@ func (v *treeVisitor) Exit(cur *tree.Node, stack []*tree.Node) (err error) {
 	return
 }
 
+type pageTemplateData struct {
+	HTMLContent template.HTML
+}
+
+type parsedDocument struct {
+	tree       *tree.Tree
+	content    string
+	outputPath string
+}
+
 type meshdocConfig struct {
-	Path string
+	SourcePath   string
+	TemplatePath string
+	OutputPath   string
 }
 
 type MeshdocOptions struct {
@@ -110,18 +124,27 @@ func NewMeshdoc(options *MeshdocOptions) *Meshdoc {
 	}
 }
 
+func (m *Meshdoc) parseTemplates(dir string) (pageTmpl *template.Template, err error) {
+	pagePath := path.Join(dir, "page.tmpl")
+	contentPath := path.Join(dir, "content.tmpl")
+
+	pageTmpl, err = template.ParseFiles(pagePath, contentPath)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func (m *Meshdoc) Run() (err error) {
 	_, err = toml.DecodeFile(m.options.ConfigPath, &m.config)
 	if err != nil {
 		return
 	}
 
-	fileInfo, err := ioutil.ReadDir(m.config.Path)
-	if err != nil {
-		return
-	}
+	log.Printf("config = %+v\n", m.config)
 
-	treeByPath := map[string]*tree.Tree{}
+	docByPath := map[string]parsedDocument{}
 
 	definitions := newNodeDefinitions()
 
@@ -132,9 +155,27 @@ func (m *Meshdoc) Run() (err error) {
 	writer.RegisterInlineHandler(&StrongHandler{})
 	writer.RegisterInlineHandler(&EmphasisHandler{})
 
+	pageTmpl, err := m.parseTemplates(m.config.TemplatePath)
+	if err != nil {
+		return
+	}
+
+	fileInfo, err := ioutil.ReadDir(m.config.SourcePath)
+	if err != nil {
+		return
+	}
+
 	for _, info := range fileInfo {
-		filePath := path.Join(m.config.Path, info.Name())
+		if path.Ext(info.Name()) != ".mf" {
+			continue
+		}
+
+		filePath := path.Join(m.config.SourcePath, info.Name())
 		log.Printf("Parsing %s\n", filePath)
+
+		outputPath := path.Join(m.config.OutputPath, info.Name())
+		outputPath = strings.TrimSuffix(outputPath, path.Ext(outputPath))
+		outputPath += ".html"
 
 		var file *os.File
 		file, err = os.Open(filePath)
@@ -157,7 +198,10 @@ func (m *Meshdoc) Run() (err error) {
 			}
 		}
 
-		treeByPath[filePath] = parser.Tree()
+		doc := parsedDocument{
+			tree:       parser.Tree(),
+			outputPath: outputPath,
+		}
 
 		buf := bytes.Buffer{}
 		err = writer.Write2(&buf, parser.Tree())
@@ -165,11 +209,28 @@ func (m *Meshdoc) Run() (err error) {
 			return
 		}
 
-		content := buf.String()
-		log.Printf("content = %+v\n", content)
+		doc.content = buf.String()
+		docByPath[filePath] = doc
+	}
 
-		// visitor := newTreeVisitor()
-		// parser.Tree().Visit(visitor)
+	err = os.MkdirAll(m.config.OutputPath, os.ModePerm)
+	if err != nil {
+		return
+	}
+
+	for _, doc := range docByPath {
+		var outFile *os.File
+		outFile, err = os.Create(doc.outputPath)
+		if err != nil {
+			return
+		}
+		defer outFile.Close()
+		err = pageTmpl.Execute(outFile, &pageTemplateData{
+			HTMLContent: template.HTML(doc.content),
+		})
+		if err != nil {
+			return
+		}
 	}
 
 	return
