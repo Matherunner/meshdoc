@@ -21,7 +21,27 @@ import (
 type GenericPath string
 
 type Context interface {
-	Value(key interface{}) interface{}
+	Set(key, value interface{})
+	Get(key interface{}) (value interface{}, ok bool)
+}
+
+type DefaultContext struct {
+	kv map[interface{}]interface{}
+}
+
+func NewDefaultContext() Context {
+	return &DefaultContext{
+		kv: map[interface{}]interface{}{},
+	}
+}
+
+func (c *DefaultContext) Get(key interface{}) (value interface{}, ok bool) {
+	value, ok = c.kv[key]
+	return
+}
+
+func (c *DefaultContext) Set(key, value interface{}) {
+	c.kv[key] = value
 }
 
 type FileReader interface {
@@ -56,7 +76,7 @@ type FileWriter interface {
 }
 
 type BookWriter interface {
-	Write(config *MeshdocConfig, reader ParsedReader) error
+	Write(ctx Context, config *MeshdocConfig, reader ParsedReader) error
 }
 
 type DefaultBookWriter struct {
@@ -66,7 +86,7 @@ func NewDefaultBookWriter() BookWriter {
 	return &DefaultBookWriter{}
 }
 
-func (w *DefaultBookWriter) Write(config *MeshdocConfig, reader ParsedReader) (err error) {
+func (w *DefaultBookWriter) Write(ctx Context, config *MeshdocConfig, reader ParsedReader) (err error) {
 	err = os.MkdirAll(config.OutputPath, os.ModePerm)
 	if err != nil {
 		return
@@ -81,6 +101,8 @@ func (w *DefaultBookWriter) Write(config *MeshdocConfig, reader ParsedReader) (e
 		if err != nil {
 			return err
 		}
+
+		// TODO: write using template files and generate nav bars etc
 
 		renderer := NewDefaultParsedWriter()
 		err = renderer.Write(outFile, tree)
@@ -115,7 +137,7 @@ func (r *DefaultParsedReader) Files() map[GenericPath]*tree.Tree {
 }
 
 type Postprocessor interface {
-	Process(r ParsedReader) ParsedReader
+	Process(ctx Context, r ParsedReader) ParsedReader
 }
 
 type ParsedWriter interface {
@@ -232,6 +254,8 @@ func (t *Meshdoc2) resetParser() {
 }
 
 func (t *Meshdoc2) Run() (err error) {
+	ctx := NewDefaultContext()
+
 	config, err := t.configProvider.Config(t.options)
 	if err != nil {
 		return
@@ -272,10 +296,10 @@ func (t *Meshdoc2) Run() (err error) {
 	parsedReader := NewDefaultParsedReader(treeByPath)
 
 	for _, p := range t.postprocessors {
-		parsedReader = p.Process(parsedReader)
+		parsedReader = p.Process(ctx, parsedReader)
 	}
 
-	err = t.bookWriter.Write(config, parsedReader)
+	err = t.bookWriter.Write(ctx, config, parsedReader)
 	if err != nil {
 		return
 	}
