@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	meshdoc := meshdoc.NewMeshdoc(&meshdoc.MeshdocOptions{
+	meshdoc := meshdoc.NewMeshdoc2(&meshdoc.MeshdocOptions{
 		ConfigPath: "./examples/simple/config.toml",
 	})
 	err := meshdoc.Run()
