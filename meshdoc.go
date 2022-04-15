@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -79,6 +78,10 @@ type BookWriter interface {
 	Write(ctx Context, config *MeshdocConfig, reader ParsedReader) error
 }
 
+var (
+	defaultPageTemplate *template.Template
+)
+
 type DefaultBookWriter struct {
 }
 
@@ -86,7 +89,52 @@ func NewDefaultBookWriter() BookWriter {
 	return &DefaultBookWriter{}
 }
 
+func (w *DefaultBookWriter) parseTemplates(dir string) (tmpl *template.Template, err error) {
+	if defaultPageTemplate != nil {
+		return defaultPageTemplate, nil
+	}
+
+	pagePath := path.Join(dir, "page.tmpl")
+	contentPath := path.Join(dir, "content.tmpl")
+
+	defaultPageTemplate, err = template.ParseFiles(pagePath, contentPath)
+	if err != nil {
+		return
+	}
+
+	return defaultPageTemplate, nil
+}
+
+func (w *DefaultBookWriter) writeFile(ctx Context, filePath string, parseTree *tree.Tree, tmpl *template.Template) (err error) {
+	var buf bytes.Buffer
+	renderer := NewDefaultParsedWriter()
+	err = renderer.Write(&buf, parseTree)
+	if err != nil {
+		return err
+	}
+
+	outFile, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	htmlContent := template.HTML(buf.String())
+	err = tmpl.Execute(outFile, &pageTemplateData{
+		HTMLContent: htmlContent,
+		// TODO: fill in navigations from ctx
+		Navigations: []navigation{},
+	})
+
+	return
+}
+
 func (w *DefaultBookWriter) Write(ctx Context, config *MeshdocConfig, reader ParsedReader) (err error) {
+	pageTmpl, err := w.parseTemplates(config.TemplatePath)
+	if err != nil {
+		return
+	}
+
 	err = os.MkdirAll(config.OutputPath, os.ModePerm)
 	if err != nil {
 		return
@@ -97,17 +145,9 @@ func (w *DefaultBookWriter) Write(ctx Context, config *MeshdocConfig, reader Par
 		filePath = strings.TrimSuffix(filePath, path.Ext(filePath))
 		filePath += ".html"
 
-		outFile, err := os.Create(filePath)
+		err = w.writeFile(ctx, filePath, tree, pageTmpl)
 		if err != nil {
-			return err
-		}
-
-		// TODO: write using template files and generate nav bars etc
-
-		renderer := NewDefaultParsedWriter()
-		err = renderer.Write(outFile, tree)
-		if err != nil {
-			return err
+			return
 		}
 	}
 
@@ -142,7 +182,7 @@ type Postprocessor interface {
 
 type ParsedWriter interface {
 	// TODO: context!
-	Write(w io.WriteCloser, tree *tree.Tree) (err error)
+	Write(w io.Writer, tree *tree.Tree) (err error)
 }
 
 type DefaultParsedWriter struct {
@@ -162,7 +202,7 @@ func NewDefaultParsedWriter() ParsedWriter {
 	}
 }
 
-func (p *DefaultParsedWriter) Write(w io.WriteCloser, tree *tree.Tree) (err error) {
+func (p *DefaultParsedWriter) Write(w io.Writer, tree *tree.Tree) (err error) {
 	err = p.writer.Write2(w, tree)
 	return
 }
@@ -294,7 +334,6 @@ func (t *Meshdoc2) Run() (err error) {
 	fmt.Printf("tree by path = %+v\n", treeByPath)
 
 	parsedReader := NewDefaultParsedReader(treeByPath)
-
 	for _, p := range t.postprocessors {
 		parsedReader = p.Process(ctx, parsedReader)
 	}
@@ -367,21 +406,6 @@ func (d *nodeDefinitions) Register(p *meshforce.Parser) {
 	}
 }
 
-type treeVisitor struct {
-}
-
-func newTreeVisitor() *treeVisitor {
-	return &treeVisitor{}
-}
-
-func (v *treeVisitor) Enter(cur *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	return
-}
-
-func (v *treeVisitor) Exit(cur *tree.Node, stack []*tree.Node) (err error) {
-	return
-}
-
 type navigation struct {
 	Name string
 	Path string
@@ -392,14 +416,6 @@ type pageTemplateData struct {
 	Navigations []navigation
 }
 
-type parsedDocument struct {
-	tree       *tree.Tree
-	content    string
-	outputPath string
-	// The path of doc relative to the root
-	outputDocPath string
-}
-
 type MeshdocConfig struct {
 	SourcePath   string
 	TemplatePath string
@@ -408,142 +424,4 @@ type MeshdocConfig struct {
 
 type MeshdocOptions struct {
 	ConfigPath string
-}
-
-type Meshdoc struct {
-	options *MeshdocOptions
-
-	config MeshdocConfig
-}
-
-func NewMeshdoc(options *MeshdocOptions) *Meshdoc {
-	return &Meshdoc{
-		options: options,
-	}
-}
-
-func (m *Meshdoc) parseTemplates(dir string) (pageTmpl *template.Template, err error) {
-	pagePath := path.Join(dir, "page.tmpl")
-	contentPath := path.Join(dir, "content.tmpl")
-
-	pageTmpl, err = template.ParseFiles(pagePath, contentPath)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (m *Meshdoc) Run() (err error) {
-	_, err = toml.DecodeFile(m.options.ConfigPath, &m.config)
-	if err != nil {
-		return
-	}
-
-	log.Printf("config = %+v\n", m.config)
-
-	docByPath := map[string]parsedDocument{}
-
-	definitions := newNodeDefinitions()
-
-	writer := html.NewWriter()
-	writer.RegisterBlockHandler(&TitleHandler{})
-	writer.RegisterBlockHandler(&H1Handler{})
-	writer.RegisterBlockHandler(&ParagraphHandler{})
-	writer.RegisterInlineHandler(&StrongHandler{})
-	writer.RegisterInlineHandler(&EmphasisHandler{})
-
-	pageTmpl, err := m.parseTemplates(m.config.TemplatePath)
-	if err != nil {
-		return
-	}
-
-	fileInfo, err := ioutil.ReadDir(m.config.SourcePath)
-	if err != nil {
-		return
-	}
-
-	for _, info := range fileInfo {
-		if path.Ext(info.Name()) != ".mf" {
-			continue
-		}
-
-		// FIXME: not always a file name, can be in a subdirectory
-		docPath := info.Name()
-
-		filePath := path.Join(m.config.SourcePath, docPath)
-		log.Printf("Parsing %s\n", filePath)
-
-		outDocPath := strings.TrimSuffix(docPath, path.Ext(docPath))
-		outDocPath += ".html"
-
-		outputPath := path.Join(m.config.OutputPath, outDocPath)
-
-		var file *os.File
-		file, err = os.Open(filePath)
-		if err != nil {
-			return
-		}
-
-		scanner := bufio.NewScanner(file)
-		peeker := NewLineScanner(scanner)
-		parser := meshforce.NewParser()
-
-		definitions.Register(parser)
-
-		parser.Parse(peeker)
-
-		msgs := parser.Messages().Messages()
-		for _, msg := range msgs {
-			if msg.Kind == meshforce.MessageKindError {
-				return fmt.Errorf("parse error: %+v", msg)
-			}
-		}
-
-		doc := parsedDocument{
-			tree:          parser.Tree(),
-			outputPath:    outputPath,
-			outputDocPath: outDocPath,
-		}
-
-		buf := bytes.Buffer{}
-		err = writer.Write2(&buf, parser.Tree())
-		if err != nil {
-			return
-		}
-
-		doc.content = buf.String()
-		docByPath[docPath] = doc
-	}
-
-	navigations := []navigation{}
-	for path, doc := range docByPath {
-		navigations = append(navigations, navigation{
-			Name: path, // TODO: should be title
-			Path: doc.outputDocPath,
-		})
-	}
-
-	err = os.MkdirAll(m.config.OutputPath, os.ModePerm)
-	if err != nil {
-		return
-	}
-
-	for _, doc := range docByPath {
-		var outFile *os.File
-		outFile, err = os.Create(doc.outputPath)
-		if err != nil {
-			return
-		}
-		defer outFile.Close()
-		err = pageTmpl.Execute(outFile, &pageTemplateData{
-			HTMLContent: template.HTML(doc.content),
-			Navigations: navigations,
-		})
-		if err != nil {
-			return
-		}
-	}
-
-	return
 }
