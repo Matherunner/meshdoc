@@ -7,3 +7,11 @@ First paragraph \E[with\E] \S[some\S] formatting.
 First section
 
 First paragraph in the first section.
+
+\H1.
+Contents
+
+\TOC.[
+file2
+file1
+\TOC.]
