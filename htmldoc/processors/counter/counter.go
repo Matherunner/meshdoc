@@ -167,6 +167,21 @@ func NewCounter(options *Options) meshdoc.Postprocessor {
 	return &Counter{options: options}
 }
 
+func (c *Counter) findTitle(root *tree.Node) *tree.Node {
+	it := tree.NewIterator(root)
+	for it.Next(tree.InstructionEnterChild) {
+		node := it.Value()
+		if !it.Exit() {
+			if block, ok := node.Value.(*tree.BlockNode); ok {
+				if block.Name() == "TITLE" {
+					return node
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (c *Counter) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader) (meshdoc.ParsedReader, error) {
 	toc := toc.FromContext(ctx)
 
@@ -177,13 +192,20 @@ func (c *Counter) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader) (meshdoc
 	valueHierarchy := newValueHierarchy(c.options.Hierarchy)
 
 	for _, entry := range toc {
+		t := r.Files()[entry.Path]
+
 		incremented := valueHierarchy.Increment(FileKey)
 		if incremented {
 			display := valueHierarchy.CurDisplay()
 			ctxValue.fileByKey[entry.Path] = display
+
+			titleNode := c.findTitle(t.Root())
+			if titleNode != nil {
+				// Need to add to the title because it shares the same numbering as the file
+				ctxValue.elementByKey[titleNode] = display
+			}
 		}
 
-		t := r.Files()[entry.Path]
 		it := tree.NewIterator(t.Root())
 		for it.Next(tree.InstructionEnterChild) {
 			node := it.Value()

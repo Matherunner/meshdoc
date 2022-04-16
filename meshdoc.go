@@ -14,7 +14,7 @@ type ComponentOptions struct {
 	BookReader     BookReader
 	BookWriter     BookWriter
 	ParsedReader   func(treeByPath TreeByPath) ParsedReader
-	ParsedWriter   ParsedWriter
+	ParsedWriter   func(ctx *Context) ParsedWriter
 	Preprocessors  []Preprocessor
 	Postprocessors []Postprocessor
 }

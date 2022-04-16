@@ -23,12 +23,12 @@ type DefaultParsedWriter struct {
 	writer *html.Writer
 }
 
-func NewDefaultParsedWriter() meshdoc.ParsedWriter {
+func NewDefaultParsedWriter(ctx *meshdoc.Context) meshdoc.ParsedWriter {
 	writer := html.NewWriter()
 
-	writer.RegisterBlockHandler(&TitleHandler{})
-	writer.RegisterBlockHandler(&H1Handler{})
-	writer.RegisterBlockHandler(&H2Handler{})
+	writer.RegisterBlockHandler(&TitleHandler{Ctx: ctx})
+	writer.RegisterBlockHandler(&H1Handler{Ctx: ctx})
+	writer.RegisterBlockHandler(&H2Handler{Ctx: ctx})
 	writer.RegisterBlockHandler(&TOCHandler{})
 	writer.RegisterBlockHandler(&ParagraphHandler{})
 
@@ -80,9 +80,9 @@ func (w *DefaultBookWriter) inputToOutputFileName(config *meshdoc.MeshdocConfig,
 	return path.Join(config.OutputPath, input.SetExt(htmlExt).Path())
 }
 
-func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, parseTree *tree.Tree, navigations []navigation) (err error) {
+func (w *DefaultBookWriter) writeFile(ctx *meshdoc.Context, filePath string, tmpl *template.Template, parseTree *tree.Tree, navigations []navigation) (err error) {
 	var buf bytes.Buffer
-	renderer := NewDefaultParsedWriter()
+	renderer := NewDefaultParsedWriter(ctx)
 	err = renderer.Write(&buf, parseTree.Root())
 	if err != nil {
 		return err
@@ -103,9 +103,9 @@ func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, 
 	return
 }
 
-func (w *DefaultBookWriter) renderSnippet(root *tree.Node) (html string, err error) {
+func (w *DefaultBookWriter) renderSnippet(ctx *meshdoc.Context, root *tree.Node) (html string, err error) {
 	var buf bytes.Buffer
-	renderer := NewDefaultParsedWriter()
+	renderer := NewDefaultParsedWriter(ctx)
 	err = renderer.Write(&buf, root)
 	html = buf.String()
 	return
@@ -131,7 +131,7 @@ func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedRea
 	for _, entry := range tableOfContents {
 		number := counterValues.FileNumber(entry.Path)
 		path := w.tocToWebPath(entry.Path)
-		title, err := w.renderSnippet(entry.Title)
+		title, err := w.renderSnippet(ctx, entry.Title)
 		if err != nil {
 			return err
 		}
@@ -147,7 +147,7 @@ func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedRea
 
 		log.Printf("writing to %s", filePath)
 
-		err = w.writeFile(filePath, pageTmpl, tree, navigations)
+		err = w.writeFile(ctx, filePath, pageTmpl, tree, navigations)
 		if err != nil {
 			return
 		}

@@ -1,12 +1,16 @@
 package htmldoc
 
 import (
+	"fmt"
 	"io"
 
+	"github.com/Matherunner/meshdoc"
+	"github.com/Matherunner/meshdoc/htmldoc/processors/counter"
 	"github.com/Matherunner/meshforce/tree"
 )
 
 type TitleHandler struct {
+	Ctx *meshdoc.Context
 }
 
 func (h *TitleHandler) Name() string {
@@ -14,7 +18,9 @@ func (h *TitleHandler) Name() string {
 }
 
 func (t *TitleHandler) Enter(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	_, err = io.WriteString(w, `<h1 class="page-header">`)
+	nums := counter.FromContext(t.Ctx)
+	num := nums.ElementNumber(node)
+	_, err = fmt.Fprintf(w, `<h1 class="page-header"><span>%s</span>.&nbsp;`, num)
 	return
 }
 
@@ -24,6 +30,7 @@ func (t *TitleHandler) Exit(w io.Writer, block *tree.BlockNode, node *tree.Node,
 }
 
 type H1Handler struct {
+	Ctx *meshdoc.Context
 }
 
 func (h *H1Handler) Name() string {
@@ -31,7 +38,9 @@ func (h *H1Handler) Name() string {
 }
 
 func (h *H1Handler) Enter(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	_, err = io.WriteString(w, `<h1>`)
+	nums := counter.FromContext(h.Ctx)
+	num := nums.ElementNumber(node)
+	_, err = fmt.Fprintf(w, `<h1><span>%s</span>.&nbsp;`, num)
 	return
 }
 
@@ -41,18 +50,21 @@ func (h *H1Handler) Exit(w io.Writer, block *tree.BlockNode, node *tree.Node, st
 }
 
 type H2Handler struct {
+	Ctx *meshdoc.Context
 }
 
 func (h *H2Handler) Name() string {
 	return "H2"
 }
 
-func (t *H2Handler) Enter(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	_, err = io.WriteString(w, `<h2>`)
+func (h *H2Handler) Enter(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
+	nums := counter.FromContext(h.Ctx)
+	num := nums.ElementNumber(node)
+	_, err = fmt.Fprintf(w, `<h2><span>%s</span>.&nbsp;`, num)
 	return
 }
 
-func (t *H2Handler) Exit(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (err error) {
+func (h *H2Handler) Exit(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (err error) {
 	_, err = io.WriteString(w, `</h2>`)
 	return
 }

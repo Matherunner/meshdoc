@@ -19,3 +19,8 @@ Another header
 Paragraph 1.
 
 Paragraph 2.
+
+\H2.
+Another subsection
+
+Paragraph 3.

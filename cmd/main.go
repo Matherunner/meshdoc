@@ -29,7 +29,7 @@ func main() {
 			BookReader:    htmldoc.NewDefaultBookReader(),
 			BookWriter:    htmldoc.NewDefaultBookWriter(),
 			ParsedReader:  htmldoc.NewDefaultParsedReader,
-			ParsedWriter:  htmldoc.NewDefaultParsedWriter(),
+			ParsedWriter:  htmldoc.NewDefaultParsedWriter,
 			Preprocessors: []meshdoc.Preprocessor{},
 			Postprocessors: []meshdoc.Postprocessor{
 				toc.NewTOC(),
