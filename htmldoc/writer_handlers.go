@@ -30,13 +30,30 @@ func (h *H1Handler) Name() string {
 	return "H1"
 }
 
-func (t *H1Handler) Enter(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
+func (h *H1Handler) Enter(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
 	_, err = io.WriteString(w, `<h1>`)
 	return
 }
 
-func (t *H1Handler) Exit(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (err error) {
+func (h *H1Handler) Exit(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (err error) {
 	_, err = io.WriteString(w, `</h1>`)
+	return
+}
+
+type H2Handler struct {
+}
+
+func (h *H2Handler) Name() string {
+	return "H2"
+}
+
+func (t *H2Handler) Enter(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
+	_, err = io.WriteString(w, `<h2>`)
+	return
+}
+
+func (t *H2Handler) Exit(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (err error) {
+	_, err = io.WriteString(w, `</h2>`)
 	return
 }
 

@@ -2,3 +2,20 @@
 Second File
 
 The first paragraph of the second file.
+
+\H1.
+A header
+
+Some text
+
+\H2.
+A subsection
+
+Text in a subsection
+
+\H1.
+Another header
+
+Paragraph 1.
+
+Paragraph 2.

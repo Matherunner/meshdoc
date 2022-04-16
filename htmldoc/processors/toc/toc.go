@@ -13,16 +13,18 @@ var (
 	ErrUnknownFile = errors.New("unknown file defined in toc")
 )
 
-type tocContextKeyType struct{}
+type contextKeyType struct{}
 
-var tocContextKey = tocContextKeyType{}
+var (
+	contextKey = contextKeyType{}
+)
 
 type tocContextValue struct {
-	toc []string
+	toc []meshdoc.GenericPath
 }
 
-func FromContext(ctx *meshdoc.Context) (toc []string) {
-	value, ok := ctx.Get(tocContextKey)
+func FromContext(ctx *meshdoc.Context) (toc []meshdoc.GenericPath) {
+	value, ok := ctx.Get(contextKey)
 	if !ok {
 		return nil
 	}
@@ -36,13 +38,13 @@ func NewTOCPostprocessor() meshdoc.Postprocessor {
 	return &TOCPostprocessor{}
 }
 
-func (p *TOCPostprocessor) parseTOCList(ctx *meshdoc.Context, content string) (toc []string, err error) {
+func (p *TOCPostprocessor) parseTOCList(ctx *meshdoc.Context, content string) (toc []meshdoc.GenericPath, err error) {
 	inputFiles := make([]string, 0, len(ctx.InputFiles()))
 	for _, file := range ctx.InputFiles() {
 		inputFiles = append(inputFiles, file.WithoutExt())
 	}
 
-	toc = make([]string, 0, 8)
+	toc = make([]meshdoc.GenericPath, 0, 8)
 	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		fileName := strings.TrimSpace(line)
@@ -54,7 +56,9 @@ func (p *TOCPostprocessor) parseTOCList(ctx *meshdoc.Context, content string) (t
 			return nil, ErrUnknownFile
 		}
 
-		toc = append(toc, fileName)
+		// Assume the entries all point to .mf files
+		p := meshdoc.NewGenericPath(fileName).SetExt(".mf")
+		toc = append(toc, p)
 	}
 	return
 }
@@ -94,7 +98,7 @@ func (p *TOCPostprocessor) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader)
 			return nil, err
 		}
 
-		ctx.Set(tocContextKey, &tocContextValue{
+		ctx.Set(contextKey, &tocContextValue{
 			toc: toc,
 		})
 	}

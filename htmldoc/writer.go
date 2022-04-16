@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/Matherunner/meshdoc"
+	"github.com/Matherunner/meshdoc/htmldoc/processors/counter"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/toc"
 	"github.com/Matherunner/meshforce/tree"
 	"github.com/Matherunner/meshforce/writer/html"
@@ -27,6 +28,7 @@ func NewDefaultParsedWriter() meshdoc.ParsedWriter {
 
 	writer.RegisterBlockHandler(&TitleHandler{})
 	writer.RegisterBlockHandler(&H1Handler{})
+	writer.RegisterBlockHandler(&H2Handler{})
 	writer.RegisterBlockHandler(&TOCHandler{})
 	writer.RegisterBlockHandler(&ParagraphHandler{})
 
@@ -70,8 +72,8 @@ func (w *DefaultBookWriter) parseTemplates(dir string) (tmpl *template.Template,
 	return defaultPageTemplate, nil
 }
 
-func (w *DefaultBookWriter) tocToWebPath(entry string) string {
-	return meshdoc.NewGenericPath(entry + htmlExt).WebPath()
+func (w *DefaultBookWriter) tocToWebPath(entry meshdoc.GenericPath) string {
+	return entry.SetExt(htmlExt).WebPath()
 }
 
 func (w *DefaultBookWriter) inputToOutputFileName(config *meshdoc.MeshdocConfig, input meshdoc.GenericPath) string {
@@ -104,6 +106,8 @@ func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, 
 func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedReader) (err error) {
 	config := ctx.Config()
 
+	counterValues := counter.FromContext(ctx)
+
 	pageTmpl, err := w.parseTemplates(config.TemplatePath)
 	if err != nil {
 		return
@@ -117,9 +121,10 @@ func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedRea
 	tableOfContents := toc.FromContext(ctx)
 	navigations := make([]navigation, 0, len(tableOfContents))
 	for _, entry := range tableOfContents {
+		number := counterValues.FileNumber(entry)
 		path := w.tocToWebPath(entry)
 		navigations = append(navigations, navigation{
-			Name: path,
+			Name: number + ". " + path,
 			Path: path,
 		})
 	}
