@@ -63,7 +63,7 @@ func (r *DefaultBookReader) Files(config *meshdoc.MeshdocConfig) (readers map[me
 		docPath := fi.Name()
 
 		filePath := path.Join(config.SourcePath, docPath)
-		readers[meshdoc.GenericPath(filePath)], err = NewDefaultFileReader(filePath)
+		readers[meshdoc.GenericPath(docPath)], err = NewDefaultFileReader(filePath)
 		if err != nil {
 			return
 		}

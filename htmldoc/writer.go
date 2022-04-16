@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -110,6 +111,9 @@ func (w *DefaultBookWriter) Write(ctx context.Context, config *meshdoc.MeshdocCo
 		filePath := string(filePath)
 		filePath = strings.TrimSuffix(filePath, path.Ext(filePath))
 		filePath += ".html"
+		filePath = path.Join(config.OutputPath, filePath)
+
+		log.Printf("writing to %s", filePath)
 
 		err = w.writeFile(ctx, filePath, tree, pageTmpl)
 		if err != nil {
