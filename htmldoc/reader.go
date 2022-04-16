@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/Matherunner/meshdoc"
+	"github.com/Matherunner/meshdoc/context"
 	"github.com/Matherunner/meshforce/tree"
 )
 
@@ -46,7 +47,12 @@ func NewDefaultBookReader() meshdoc.BookReader {
 	return &DefaultBookReader{}
 }
 
-func (r *DefaultBookReader) Files(config *meshdoc.MeshdocConfig) (readers map[meshdoc.GenericPath]meshdoc.FileReader, err error) {
+func (r *DefaultBookReader) Files(ctx context.Context) (readers map[meshdoc.GenericPath]meshdoc.FileReader, err error) {
+	config, err := meshdoc.ConfigFromContext(ctx)
+	if err != nil {
+		return
+	}
+
 	fileInfo, err := ioutil.ReadDir(config.SourcePath)
 	if err != nil {
 		return

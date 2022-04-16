@@ -4,13 +4,12 @@ import (
 	"log"
 
 	"github.com/Matherunner/meshdoc"
-	"github.com/Matherunner/meshdoc/config"
 	"github.com/Matherunner/meshdoc/htmldoc"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/toc"
 )
 
 func main() {
-	config, err := config.LoadFromFile("./examples/simple/config.toml")
+	config, err := meshdoc.LoadFromFile("./examples/simple/config.toml")
 	if err != nil {
 		log.Fatalf("unable to load config: %+v", err)
 	}

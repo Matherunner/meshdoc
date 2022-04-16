@@ -53,7 +53,9 @@ func (t *Meshdoc) newParser() (parser *meshforce.Parser) {
 func (t *Meshdoc) Run() (err error) {
 	ctx := context.NewDefaultContext()
 
-	files, err := t.options.Components.BookReader.Files(t.options.Config)
+	ConfigToContext(ctx, t.options.Config)
+
+	files, err := t.options.Components.BookReader.Files(ctx)
 	if err != nil {
 		return
 	}
@@ -91,7 +93,7 @@ func (t *Meshdoc) Run() (err error) {
 		}
 	}
 
-	err = t.options.Components.BookWriter.Write(ctx, t.options.Config, parsedReader)
+	err = t.options.Components.BookWriter.Write(ctx, parsedReader)
 	if err != nil {
 		return
 	}

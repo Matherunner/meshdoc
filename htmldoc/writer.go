@@ -91,7 +91,12 @@ func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, 
 	return
 }
 
-func (w *DefaultBookWriter) Write(ctx context.Context, config *meshdoc.MeshdocConfig, reader meshdoc.ParsedReader) (err error) {
+func (w *DefaultBookWriter) Write(ctx context.Context, reader meshdoc.ParsedReader) (err error) {
+	config, err := meshdoc.ConfigFromContext(ctx)
+	if err != nil {
+		return
+	}
+
 	pageTmpl, err := w.parseTemplates(config.TemplatePath)
 	if err != nil {
 		return

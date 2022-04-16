@@ -8,7 +8,9 @@ import (
 	"github.com/Matherunner/meshforce/tree"
 )
 
-var tocContextKey = &struct{}{}
+type tocContextKeyType struct{}
+
+var tocContextKey = tocContextKeyType{}
 
 type tocContextValue struct {
 	toc []meshdoc.GenericPath

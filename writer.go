@@ -12,7 +12,7 @@ type FileWriter interface {
 }
 
 type BookWriter interface {
-	Write(ctx context.Context, config *MeshdocConfig, reader ParsedReader) error
+	Write(ctx context.Context, reader ParsedReader) error
 }
 
 type ParsedWriter interface {
