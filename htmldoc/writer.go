@@ -2,7 +2,6 @@ package htmldoc
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -69,7 +68,7 @@ func (w *DefaultBookWriter) parseTemplates(dir string) (tmpl *template.Template,
 	return defaultPageTemplate, nil
 }
 
-func (w *DefaultBookWriter) writeFile(ctx context.Context, filePath string, parseTree *tree.Tree, tmpl *template.Template) (err error) {
+func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, parseTree *tree.Tree, navigations []navigation) (err error) {
 	var buf bytes.Buffer
 	renderer := NewDefaultParsedWriter()
 	err = renderer.Write(&buf, parseTree)
@@ -83,14 +82,10 @@ func (w *DefaultBookWriter) writeFile(ctx context.Context, filePath string, pars
 	}
 	defer outFile.Close()
 
-	tableOfContents := toc.FromContext(ctx)
-	fmt.Printf("TOC = %+v\n", tableOfContents)
-
 	htmlContent := template.HTML(buf.String())
 	err = tmpl.Execute(outFile, &pageTemplateData{
 		HTMLContent: htmlContent,
-		// TODO: fill in navigations from ctx
-		Navigations: []navigation{},
+		Navigations: navigations,
 	})
 
 	return
@@ -107,6 +102,19 @@ func (w *DefaultBookWriter) Write(ctx context.Context, config *meshdoc.MeshdocCo
 		return
 	}
 
+	tableOfContents := toc.FromContext(ctx)
+	navigations := make([]navigation, 0, len(tableOfContents))
+	for _, entry := range tableOfContents {
+		// TODO: ensure the file actually exists! Maybe TOC should include the path of the orignial source file and/or the output file?
+
+		path := string(entry) + ".html"
+
+		navigations = append(navigations, navigation{
+			Name: path,
+			Path: path,
+		})
+	}
+
 	for filePath, tree := range reader.Files() {
 		filePath := string(filePath)
 		filePath = strings.TrimSuffix(filePath, path.Ext(filePath))
@@ -115,7 +123,7 @@ func (w *DefaultBookWriter) Write(ctx context.Context, config *meshdoc.MeshdocCo
 
 		log.Printf("writing to %s", filePath)
 
-		err = w.writeFile(ctx, filePath, tree, pageTmpl)
+		err = w.writeFile(filePath, pageTmpl, tree, navigations)
 		if err != nil {
 			return
 		}
