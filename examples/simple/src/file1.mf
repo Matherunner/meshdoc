@@ -15,3 +15,8 @@ Contents
 file2
 file1
 \TOC.]
+
+\H2.{ID=file1-test-subsection\}
+A subsection with target
+
+There should be a link cross referencing this subsection from \C[file2\C].

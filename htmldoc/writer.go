@@ -34,6 +34,7 @@ func NewDefaultParsedWriter(ctx *meshdoc.Context) meshdoc.ParsedWriter {
 
 	writer.RegisterInlineHandler(&StrongHandler{})
 	writer.RegisterInlineHandler(&EmphasisHandler{})
+	writer.RegisterInlineHandler(&CodeHandler{})
 
 	return &DefaultParsedWriter{
 		writer: writer,

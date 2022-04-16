@@ -136,3 +136,20 @@ func (h *StrongHandler) Exit(w io.Writer, block *tree.InlineNode, node *tree.Nod
 	_, err = io.WriteString(w, "</strong>")
 	return
 }
+
+type CodeHandler struct {
+}
+
+func (h *CodeHandler) Name() string {
+	return "C"
+}
+
+func (h *CodeHandler) Enter(w io.Writer, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
+	_, err = io.WriteString(w, "<code>")
+	return
+}
+
+func (h *CodeHandler) Exit(w io.Writer, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (err error) {
+	_, err = io.WriteString(w, "</code>")
+	return
+}
