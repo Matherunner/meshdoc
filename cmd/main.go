@@ -32,7 +32,7 @@ func main() {
 			ParsedWriter:  htmldoc.NewDefaultParsedWriter(),
 			Preprocessors: []meshdoc.Preprocessor{},
 			Postprocessors: []meshdoc.Postprocessor{
-				toc.NewTOCPostprocessor(),
+				toc.NewTOC(),
 				counter.NewCounter(counterOptions),
 			},
 		},

@@ -121,10 +121,10 @@ func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedRea
 	tableOfContents := toc.FromContext(ctx)
 	navigations := make([]navigation, 0, len(tableOfContents))
 	for _, entry := range tableOfContents {
-		number := counterValues.FileNumber(entry)
-		path := w.tocToWebPath(entry)
+		number := counterValues.FileNumber(entry.Path)
+		path := w.tocToWebPath(entry.Path)
 		navigations = append(navigations, navigation{
-			Name: number + ". " + path,
+			Name: number + ". " + entry.Name,
 			Path: path,
 		})
 	}

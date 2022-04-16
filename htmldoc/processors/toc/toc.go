@@ -13,38 +13,62 @@ var (
 	ErrUnknownFile = errors.New("unknown file defined in toc")
 )
 
-type contextKeyType struct{}
-
-var (
-	contextKey = contextKeyType{}
-)
-
-type tocContextValue struct {
-	toc []meshdoc.GenericPath
+type Entry struct {
+	Name string
+	Path meshdoc.GenericPath
 }
 
-func FromContext(ctx *meshdoc.Context) (toc []meshdoc.GenericPath) {
-	value, ok := ctx.Get(contextKey)
+type TOC struct {
+}
+
+func NewTOC() meshdoc.Postprocessor {
+	return &TOC{}
+}
+
+func (t *TOC) extractTitle(path meshdoc.GenericPath, r meshdoc.ParsedReader) string {
+	parseTree, ok := r.Files()[path]
 	if !ok {
-		return nil
+		return ""
 	}
-	return value.(*tocContextValue).toc
+
+	// TODO: extracting text seems like a very common operation, maybe can add a method to Node?
+
+	it := tree.NewIterator(parseTree)
+	foundTitle := false
+	builder := strings.Builder{}
+	for it.Next(tree.InstructionEnterChild) {
+		node := it.Value()
+		if !it.Exit() {
+			if block, ok := node.Value.(*tree.BlockNode); ok {
+				if block.Name() == "TITLE" {
+					foundTitle = true
+				}
+			}
+
+			if foundTitle {
+				if text, ok := node.Value.(*tree.TextNode); ok {
+					builder.WriteString(text.Content())
+				}
+			}
+		} else {
+			if block, ok := node.Value.(*tree.BlockNode); ok {
+				if block.Name() == "TITLE" {
+					break
+				}
+			}
+		}
+	}
+
+	return strings.TrimSpace(builder.String())
 }
 
-type TOCPostprocessor struct {
-}
-
-func NewTOCPostprocessor() meshdoc.Postprocessor {
-	return &TOCPostprocessor{}
-}
-
-func (p *TOCPostprocessor) parseTOCList(ctx *meshdoc.Context, content string) (toc []meshdoc.GenericPath, err error) {
+func (t *TOC) parseTOCList(ctx *meshdoc.Context, content string, r meshdoc.ParsedReader) (toc []Entry, err error) {
 	inputFiles := make([]string, 0, len(ctx.InputFiles()))
 	for _, file := range ctx.InputFiles() {
 		inputFiles = append(inputFiles, file.WithoutExt())
 	}
 
-	toc = make([]meshdoc.GenericPath, 0, 8)
+	toc = make([]Entry, 0, 8)
 	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		fileName := strings.TrimSpace(line)
@@ -58,12 +82,16 @@ func (p *TOCPostprocessor) parseTOCList(ctx *meshdoc.Context, content string) (t
 
 		// Assume the entries all point to .mf files
 		p := meshdoc.NewGenericPath(fileName).SetExt(".mf")
-		toc = append(toc, p)
+
+		toc = append(toc, Entry{
+			Name: t.extractTitle(p, r),
+			Path: p,
+		})
 	}
 	return
 }
 
-func (p *TOCPostprocessor) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader) (meshdoc.ParsedReader, error) {
+func (t *TOC) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader) (meshdoc.ParsedReader, error) {
 	builder := strings.Builder{}
 	foundTOC := false
 	for _, t := range r.Files() {
@@ -93,12 +121,12 @@ func (p *TOCPostprocessor) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader)
 	}
 
 	if foundTOC {
-		toc, err := p.parseTOCList(ctx, builder.String())
+		toc, err := t.parseTOCList(ctx, builder.String(), r)
 		if err != nil {
 			return nil, err
 		}
 
-		ctx.Set(contextKey, &tocContextValue{
+		setToContext(ctx, &contextValue{
 			toc: toc,
 		})
 	}

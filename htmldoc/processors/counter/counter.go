@@ -180,10 +180,10 @@ func (c *Counter) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader) (meshdoc
 		incremented := valueHierarchy.Increment(FileKey)
 		if incremented {
 			display := valueHierarchy.CurDisplay()
-			ctxValue.fileByKey[entry] = display
+			ctxValue.fileByKey[entry.Path] = display
 		}
 
-		t := r.Files()[entry]
+		t := r.Files()[entry.Path]
 		it := tree.NewIterator(t)
 		for it.Next(tree.InstructionEnterChild) {
 			node := it.Value()
