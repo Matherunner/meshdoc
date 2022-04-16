@@ -74,8 +74,8 @@ func (w *DefaultBookWriter) tocToWebPath(entry string) string {
 	return meshdoc.NewGenericPath(entry + htmlExt).WebPath()
 }
 
-func (w *DefaultBookWriter) inputToOutputFileName(config *meshdoc.MeshdocConfig, input *meshdoc.GenericPath) string {
-	return path.Join(config.OutputPath, input.Clone().SetExt(htmlExt).Path())
+func (w *DefaultBookWriter) inputToOutputFileName(config *meshdoc.MeshdocConfig, input meshdoc.GenericPath) string {
+	return path.Join(config.OutputPath, input.SetExt(htmlExt).Path())
 }
 
 func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, parseTree *tree.Tree, navigations []navigation) (err error) {

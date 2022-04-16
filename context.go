@@ -5,7 +5,7 @@ import "sort"
 type Context struct {
 	kv               map[interface{}]interface{}
 	config           *MeshdocConfig
-	sortedInputFiles []*GenericPath
+	sortedInputFiles []GenericPath
 }
 
 func NewContext() *Context {
@@ -23,12 +23,12 @@ func (c *Context) SetConfig(config *MeshdocConfig) {
 }
 
 // InputFiles returns the sorted list of the generic paths of input files.
-func (c *Context) InputFiles() []*GenericPath {
+func (c *Context) InputFiles() []GenericPath {
 	return c.sortedInputFiles
 }
 
 // SetInputFiles sorts and stores the input file paths.
-func (c *Context) SetInputFiles(paths []*GenericPath) {
+func (c *Context) SetInputFiles(paths []GenericPath) {
 	sort.Sort(GenericPathList(paths))
 	c.sortedInputFiles = paths
 }

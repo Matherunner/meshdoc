@@ -6,42 +6,33 @@ import (
 )
 
 type GenericPath struct {
-	path       string
-	withoutExt string
+	path string
 }
 
-func NewGenericPath(path string) *GenericPath {
-	return &GenericPath{path: path}
+func NewGenericPath(path string) GenericPath {
+	return GenericPath{path: path}
 }
 
-func (p *GenericPath) Path() string {
+func (p GenericPath) Path() string {
 	return p.path
 }
 
-func (p *GenericPath) WebPath() string {
+func (p GenericPath) WebPath() string {
 	// TODO: is this correct or reliable?
 	return strings.ReplaceAll(p.path, "\\", "/")
 }
 
-func (p *GenericPath) WithoutExt() string {
-	if p.withoutExt == "" {
-		ext := path.Ext(p.path)
-		p.withoutExt = strings.TrimSuffix(p.path, ext)
-	}
-	return p.withoutExt
+func (p GenericPath) WithoutExt() string {
+	ext := path.Ext(p.path)
+	return strings.TrimSuffix(p.path, ext)
 }
 
-func (p *GenericPath) SetExt(ext string) *GenericPath {
+func (p GenericPath) SetExt(ext string) GenericPath {
 	p.path = p.WithoutExt() + ext
 	return p
 }
 
-func (p *GenericPath) Clone() *GenericPath {
-	newPath := *p
-	return &newPath
-}
-
-type GenericPathList []*GenericPath
+type GenericPathList []GenericPath
 
 func (p GenericPathList) Len() int {
 	return len(p)

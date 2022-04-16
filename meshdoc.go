@@ -8,7 +8,7 @@ import (
 	"github.com/Matherunner/meshforce/tree"
 )
 
-type TreeByPath map[*GenericPath]*tree.Tree
+type TreeByPath map[GenericPath]*tree.Tree
 
 type ComponentOptions struct {
 	BookReader     BookReader
@@ -41,8 +41,8 @@ func (t *Meshdoc) newParser() (parser *meshforce.Parser) {
 	return parser
 }
 
-func (t *Meshdoc) setInputFilesToContext(ctx *Context, files map[*GenericPath]FileReader) {
-	inputFiles := make([]*GenericPath, 0, len(files))
+func (t *Meshdoc) setInputFilesToContext(ctx *Context, files map[GenericPath]FileReader) {
+	inputFiles := make([]GenericPath, 0, len(files))
 	for k := range files {
 		inputFiles = append(inputFiles, k)
 	}
@@ -67,7 +67,7 @@ func (t *Meshdoc) Run() (err error) {
 		}
 	}
 
-	treeByPath := map[*GenericPath]*tree.Tree{}
+	treeByPath := map[GenericPath]*tree.Tree{}
 
 	for path, r := range files {
 		scanner := bufio.NewScanner(r)
