@@ -3,7 +3,6 @@ package meshdoc
 import (
 	"io"
 
-	"github.com/Matherunner/meshdoc/context"
 	"github.com/Matherunner/meshforce/tree"
 )
 
@@ -12,7 +11,7 @@ type FileWriter interface {
 }
 
 type BookWriter interface {
-	Write(ctx context.Context, reader ParsedReader) error
+	Write(ctx *Context, reader ParsedReader) error
 }
 
 type ParsedWriter interface {

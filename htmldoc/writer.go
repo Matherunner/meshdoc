@@ -7,13 +7,15 @@ import (
 	"log"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/Matherunner/meshdoc"
-	"github.com/Matherunner/meshdoc/context"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/toc"
 	"github.com/Matherunner/meshforce/tree"
 	"github.com/Matherunner/meshforce/writer/html"
+)
+
+const (
+	htmlExt = ".html"
 )
 
 type DefaultParsedWriter struct {
@@ -68,6 +70,14 @@ func (w *DefaultBookWriter) parseTemplates(dir string) (tmpl *template.Template,
 	return defaultPageTemplate, nil
 }
 
+func (w *DefaultBookWriter) tocToWebPath(entry string) string {
+	return meshdoc.NewGenericPath(entry + htmlExt).WebPath()
+}
+
+func (w *DefaultBookWriter) inputToOutputFileName(config *meshdoc.MeshdocConfig, input *meshdoc.GenericPath) string {
+	return path.Join(config.OutputPath, input.Clone().SetExt(htmlExt).Path())
+}
+
 func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, parseTree *tree.Tree, navigations []navigation) (err error) {
 	var buf bytes.Buffer
 	renderer := NewDefaultParsedWriter()
@@ -91,11 +101,8 @@ func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, 
 	return
 }
 
-func (w *DefaultBookWriter) Write(ctx context.Context, reader meshdoc.ParsedReader) (err error) {
-	config, err := meshdoc.ConfigFromContext(ctx)
-	if err != nil {
-		return
-	}
+func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedReader) (err error) {
+	config := ctx.Config()
 
 	pageTmpl, err := w.parseTemplates(config.TemplatePath)
 	if err != nil {
@@ -110,10 +117,7 @@ func (w *DefaultBookWriter) Write(ctx context.Context, reader meshdoc.ParsedRead
 	tableOfContents := toc.FromContext(ctx)
 	navigations := make([]navigation, 0, len(tableOfContents))
 	for _, entry := range tableOfContents {
-		// TODO: ensure the file actually exists! Maybe TOC should include the path of the orignial source file and/or the output file?
-
-		path := string(entry) + ".html"
-
+		path := w.tocToWebPath(entry)
 		navigations = append(navigations, navigation{
 			Name: path,
 			Path: path,
@@ -121,10 +125,7 @@ func (w *DefaultBookWriter) Write(ctx context.Context, reader meshdoc.ParsedRead
 	}
 
 	for filePath, tree := range reader.Files() {
-		filePath := string(filePath)
-		filePath = strings.TrimSuffix(filePath, path.Ext(filePath))
-		filePath += ".html"
-		filePath = path.Join(config.OutputPath, filePath)
+		filePath := w.inputToOutputFileName(config, filePath)
 
 		log.Printf("writing to %s", filePath)
 

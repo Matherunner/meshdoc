@@ -6,19 +6,18 @@ import (
 	"path"
 
 	"github.com/Matherunner/meshdoc"
-	"github.com/Matherunner/meshdoc/context"
 	"github.com/Matherunner/meshforce/tree"
 )
 
 type DefaultParsedReader struct {
-	m map[meshdoc.GenericPath]*tree.Tree
+	m map[*meshdoc.GenericPath]*tree.Tree
 }
 
 func NewDefaultParsedReader(m meshdoc.TreeByPath) meshdoc.ParsedReader {
 	return &DefaultParsedReader{m: m}
 }
 
-func (r *DefaultParsedReader) Files() map[meshdoc.GenericPath]*tree.Tree {
+func (r *DefaultParsedReader) Files() map[*meshdoc.GenericPath]*tree.Tree {
 	return r.m
 }
 
@@ -47,18 +46,15 @@ func NewDefaultBookReader() meshdoc.BookReader {
 	return &DefaultBookReader{}
 }
 
-func (r *DefaultBookReader) Files(ctx context.Context) (readers map[meshdoc.GenericPath]meshdoc.FileReader, err error) {
-	config, err := meshdoc.ConfigFromContext(ctx)
-	if err != nil {
-		return
-	}
+func (r *DefaultBookReader) Files(ctx *meshdoc.Context) (readers map[*meshdoc.GenericPath]meshdoc.FileReader, err error) {
+	config := ctx.Config()
 
 	fileInfo, err := ioutil.ReadDir(config.SourcePath)
 	if err != nil {
 		return
 	}
 
-	readers = map[meshdoc.GenericPath]meshdoc.FileReader{}
+	readers = map[*meshdoc.GenericPath]meshdoc.FileReader{}
 
 	for _, fi := range fileInfo {
 		if path.Ext(fi.Name()) != ".mf" {
@@ -69,7 +65,7 @@ func (r *DefaultBookReader) Files(ctx context.Context) (readers map[meshdoc.Gene
 		docPath := fi.Name()
 
 		filePath := path.Join(config.SourcePath, docPath)
-		readers[meshdoc.GenericPath(docPath)], err = NewDefaultFileReader(filePath)
+		readers[meshdoc.NewGenericPath(docPath)], err = NewDefaultFileReader(filePath)
 		if err != nil {
 			return
 		}

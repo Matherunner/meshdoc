@@ -4,14 +4,11 @@ import (
 	"bufio"
 	"fmt"
 
-	"github.com/Matherunner/meshdoc/context"
 	"github.com/Matherunner/meshforce"
 	"github.com/Matherunner/meshforce/tree"
 )
 
-type GenericPath string
-
-type TreeByPath map[GenericPath]*tree.Tree
+type TreeByPath map[*GenericPath]*tree.Tree
 
 type ComponentOptions struct {
 	BookReader     BookReader
@@ -25,12 +22,6 @@ type ComponentOptions struct {
 type MeshdocOptions struct {
 	Config     *MeshdocConfig
 	Components ComponentOptions
-}
-
-type MeshdocConfig struct {
-	SourcePath   string
-	TemplatePath string
-	OutputPath   string
 }
 
 type Meshdoc struct {
@@ -50,15 +41,25 @@ func (t *Meshdoc) newParser() (parser *meshforce.Parser) {
 	return parser
 }
 
-func (t *Meshdoc) Run() (err error) {
-	ctx := context.NewDefaultContext()
+func (t *Meshdoc) setInputFilesToContext(ctx *Context, files map[*GenericPath]FileReader) {
+	inputFiles := make([]*GenericPath, 0, len(files))
+	for k := range files {
+		inputFiles = append(inputFiles, k)
+	}
+	ctx.SetInputFiles(inputFiles)
+}
 
-	ConfigToContext(ctx, t.options.Config)
+func (t *Meshdoc) Run() (err error) {
+	ctx := NewContext()
+
+	ctx.SetConfig(t.options.Config)
 
 	files, err := t.options.Components.BookReader.Files(ctx)
 	if err != nil {
 		return
 	}
+
+	t.setInputFilesToContext(ctx, files)
 
 	for path, r := range files {
 		for _, p := range t.options.Components.Preprocessors {
@@ -66,7 +67,7 @@ func (t *Meshdoc) Run() (err error) {
 		}
 	}
 
-	treeByPath := map[GenericPath]*tree.Tree{}
+	treeByPath := map[*GenericPath]*tree.Tree{}
 
 	for path, r := range files {
 		scanner := bufio.NewScanner(r)

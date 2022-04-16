@@ -3,7 +3,6 @@ package meshdoc
 import (
 	"io"
 
-	"github.com/Matherunner/meshdoc/context"
 	"github.com/Matherunner/meshforce/tree"
 )
 
@@ -13,11 +12,11 @@ type FileReader interface {
 }
 
 type BookReader interface {
-	Files(ctx context.Context) (readers map[GenericPath]FileReader, err error)
+	Files(ctx *Context) (readers map[*GenericPath]FileReader, err error)
 }
 
 type ParsedReader interface {
 	// TODO: also messages
-	Files() map[GenericPath]*tree.Tree
+	Files() map[*GenericPath]*tree.Tree
 	// Context() Context
 }
