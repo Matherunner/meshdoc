@@ -18,7 +18,7 @@ Another header
 
 Paragraph 1.
 
-Paragraph 2.
+Paragraph 2. Click \XREF{ID=file1-test-subsection\}[here\XREF] for a target to a subsection in \C[file1\C].
 
 \H2.
 Another subsection

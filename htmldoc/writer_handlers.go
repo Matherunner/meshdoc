@@ -153,3 +153,20 @@ func (h *CodeHandler) Exit(w io.Writer, block *tree.InlineNode, node *tree.Node,
 	_, err = io.WriteString(w, "</code>")
 	return
 }
+
+type XRefHandler struct {
+}
+
+func (h *XRefHandler) Name() string {
+	return "XREF"
+}
+
+func (h *XRefHandler) Enter(w io.Writer, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
+	_, err = fmt.Fprintf(w, `<a href="%s">`, "TODO-target!")
+	return
+}
+
+func (h *XRefHandler) Exit(w io.Writer, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (err error) {
+	_, err = io.WriteString(w, "</a>")
+	return
+}

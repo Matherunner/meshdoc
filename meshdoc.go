@@ -102,8 +102,10 @@ func (t *Meshdoc) Run() (err error) {
 	return nil
 }
 
+// TODO: should make this configurable?
 type nodeDefinitions struct {
-	blockDefs []meshforce.BlockDefinition
+	blockDefs  []meshforce.BlockDefinition
+	inlineDefs []meshforce.InlineDefinition
 }
 
 func newNodeDefinitions() *nodeDefinitions {
@@ -112,6 +114,10 @@ func newNodeDefinitions() *nodeDefinitions {
 			Name:   "TOC",
 			Struct: meshforce.BlockStructLiteral,
 			Policy: meshforce.BlockPolicyReadUntilClose,
+		}},
+		inlineDefs: []meshforce.InlineDefinition{{
+			Name:   "XREF",
+			Struct: meshforce.InlineStructSimple,
 		}},
 	}
 }
@@ -124,6 +130,9 @@ func (d *nodeDefinitions) Register(p *meshforce.Parser) {
 		p.RegisterBlock(def)
 	}
 	for _, def := range meshforce.InlineDefinitions {
+		p.RegisterInline(def)
+	}
+	for _, def := range d.inlineDefs {
 		p.RegisterInline(def)
 	}
 }
