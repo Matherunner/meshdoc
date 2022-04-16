@@ -1,5 +1,5 @@
 \TITLE.
-Second File
+Second File with \E[emphasis\E]
 
 The first paragraph of the second file.
 

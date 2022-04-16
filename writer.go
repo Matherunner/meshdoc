@@ -16,5 +16,5 @@ type BookWriter interface {
 
 type ParsedWriter interface {
 	// TODO: context!
-	Write(w io.Writer, tree *tree.Tree) (err error)
+	Write(w io.Writer, root *tree.Node) (err error)
 }

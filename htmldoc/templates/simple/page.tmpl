@@ -37,11 +37,9 @@
         {{- block "content" . }}{{ end -}}
     </div>
     <nav class="navigation">
-        <ul>
-            {{- range .Navigations }}
-            <li><a href="{{ .Path }}">{{ .Name }}</a></li>
-            {{ end -}}
-        </ul>
+        {{- range .Navigations }}
+        <div><a href="{{ .Path }}">{{ .Number }}.&nbsp;{{ .Title }}</a></div>
+        {{ end -}}
     </nav>
 </div>
 </body>

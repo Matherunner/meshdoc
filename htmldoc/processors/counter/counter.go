@@ -184,7 +184,7 @@ func (c *Counter) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader) (meshdoc
 		}
 
 		t := r.Files()[entry.Path]
-		it := tree.NewIterator(t)
+		it := tree.NewIterator(t.Root())
 		for it.Next(tree.InstructionEnterChild) {
 			node := it.Value()
 			if !it.Exit() {

@@ -40,8 +40,8 @@ func NewDefaultParsedWriter() meshdoc.ParsedWriter {
 	}
 }
 
-func (p *DefaultParsedWriter) Write(w io.Writer, tree *tree.Tree) (err error) {
-	err = p.writer.Write2(w, tree)
+func (p *DefaultParsedWriter) Write(w io.Writer, root *tree.Node) (err error) {
+	err = p.writer.Write2(w, root)
 	return
 }
 
@@ -83,7 +83,7 @@ func (w *DefaultBookWriter) inputToOutputFileName(config *meshdoc.MeshdocConfig,
 func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, parseTree *tree.Tree, navigations []navigation) (err error) {
 	var buf bytes.Buffer
 	renderer := NewDefaultParsedWriter()
-	err = renderer.Write(&buf, parseTree)
+	err = renderer.Write(&buf, parseTree.Root())
 	if err != nil {
 		return err
 	}
@@ -100,6 +100,14 @@ func (w *DefaultBookWriter) writeFile(filePath string, tmpl *template.Template, 
 		Navigations: navigations,
 	})
 
+	return
+}
+
+func (w *DefaultBookWriter) renderSnippet(root *tree.Node) (html string, err error) {
+	var buf bytes.Buffer
+	renderer := NewDefaultParsedWriter()
+	err = renderer.Write(&buf, root)
+	html = buf.String()
 	return
 }
 
@@ -123,9 +131,14 @@ func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedRea
 	for _, entry := range tableOfContents {
 		number := counterValues.FileNumber(entry.Path)
 		path := w.tocToWebPath(entry.Path)
+		title, err := w.renderSnippet(entry.Title)
+		if err != nil {
+			return err
+		}
 		navigations = append(navigations, navigation{
-			Name: number + ". " + entry.Name,
-			Path: path,
+			Number: number,
+			Title:  template.HTML(title),
+			Path:   path,
 		})
 	}
 
@@ -144,8 +157,9 @@ func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedRea
 }
 
 type navigation struct {
-	Name string
-	Path string
+	Number string
+	Title  template.HTML
+	Path   string
 }
 
 type pageTemplateData struct {

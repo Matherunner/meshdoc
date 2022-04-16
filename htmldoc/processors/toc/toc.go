@@ -14,8 +14,8 @@ var (
 )
 
 type Entry struct {
-	Name string
-	Path meshdoc.GenericPath
+	Title *tree.Node
+	Path  meshdoc.GenericPath
 }
 
 type TOC struct {
@@ -25,41 +25,25 @@ func NewTOC() meshdoc.Postprocessor {
 	return &TOC{}
 }
 
-func (t *TOC) extractTitle(path meshdoc.GenericPath, r meshdoc.ParsedReader) string {
+func (t *TOC) extractTitle(path meshdoc.GenericPath, r meshdoc.ParsedReader) *tree.Node {
 	parseTree, ok := r.Files()[path]
 	if !ok {
-		return ""
+		return nil
 	}
 
-	// TODO: extracting text seems like a very common operation, maybe can add a method to Node?
-
-	it := tree.NewIterator(parseTree)
-	foundTitle := false
-	builder := strings.Builder{}
+	it := tree.NewIterator(parseTree.Root())
 	for it.Next(tree.InstructionEnterChild) {
 		node := it.Value()
 		if !it.Exit() {
 			if block, ok := node.Value.(*tree.BlockNode); ok {
 				if block.Name() == "TITLE" {
-					foundTitle = true
-				}
-			}
-
-			if foundTitle {
-				if text, ok := node.Value.(*tree.TextNode); ok {
-					builder.WriteString(text.Content())
-				}
-			}
-		} else {
-			if block, ok := node.Value.(*tree.BlockNode); ok {
-				if block.Name() == "TITLE" {
-					break
+					return node.Child
 				}
 			}
 		}
 	}
 
-	return strings.TrimSpace(builder.String())
+	return nil
 }
 
 func (t *TOC) parseTOCList(ctx *meshdoc.Context, content string, r meshdoc.ParsedReader) (toc []Entry, err error) {
@@ -84,18 +68,20 @@ func (t *TOC) parseTOCList(ctx *meshdoc.Context, content string, r meshdoc.Parse
 		p := meshdoc.NewGenericPath(fileName).SetExt(".mf")
 
 		toc = append(toc, Entry{
-			Name: t.extractTitle(p, r),
-			Path: p,
+			Title: t.extractTitle(p, r),
+			Path:  p,
 		})
 	}
 	return
 }
 
 func (t *TOC) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader) (meshdoc.ParsedReader, error) {
+	// TODO: extracting text seems like a very common operation, maybe can add a method to Node?
+
 	builder := strings.Builder{}
 	foundTOC := false
 	for _, t := range r.Files() {
-		it := tree.NewIterator(t)
+		it := tree.NewIterator(t.Root())
 		for it.Next(tree.InstructionEnterChild) {
 			node := it.Value()
 
