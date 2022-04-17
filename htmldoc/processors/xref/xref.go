@@ -28,6 +28,8 @@ func NewXRef() meshdoc.Postprocessor {
 func (x *XRef) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader) (meshdoc.ParsedReader, error) {
 	ctxValue := NewContextValue()
 
+	// FIXME: the path written here needs to be converted to the output file path! Maybe we can write a postprocessor that injects the mapping into ctx?
+
 	// Scan for all nodes with ID
 	for p, t := range r.Files() {
 		it := tree.NewIterator(t.Root())

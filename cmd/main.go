@@ -27,10 +27,10 @@ func main() {
 	meshdoc := meshdoc.NewMeshdoc(&meshdoc.MeshdocOptions{
 		Config: config,
 		Components: meshdoc.ComponentOptions{
-			BookReader:    htmldoc.NewDefaultBookReader(),
-			BookWriter:    htmldoc.NewDefaultBookWriter(),
-			ParsedReader:  htmldoc.NewDefaultParsedReader,
-			ParsedWriter:  htmldoc.NewDefaultParsedWriter, // TODO: not used?
+			BookReader:   htmldoc.NewDefaultBookReader(),
+			BookWriter:   htmldoc.NewDefaultBookWriter(),
+			ParsedReader: htmldoc.NewDefaultParsedReader,
+			// ParsedWriter:  htmldoc.NewDefaultParsedWriter, // TODO: not used?
 			Preprocessors: []meshdoc.Preprocessor{},
 			Postprocessors: []meshdoc.Postprocessor{
 				toc.NewTOC(),

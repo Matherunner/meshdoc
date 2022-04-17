@@ -1,12 +1,18 @@
 package htmldoc
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
 	"github.com/Matherunner/meshdoc"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/counter"
+	"github.com/Matherunner/meshdoc/htmldoc/processors/xref"
 	"github.com/Matherunner/meshforce/tree"
+)
+
+var (
+	ErrTargetNotFound = errors.New("target not found for xref")
 )
 
 type TitleHandler struct {
@@ -60,7 +66,15 @@ func (h *H2Handler) Name() string {
 func (h *H2Handler) Enter(w io.Writer, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
 	nums := counter.FromContext(h.Ctx)
 	num := nums.ElementNumber(node)
-	_, err = fmt.Fprintf(w, `<h2><span>%s</span>.&nbsp;`, num)
+
+	idProp := ""
+	refStore := xref.FromContext(h.Ctx)
+	target, ok := refStore.IDByTargetNode(node)
+	if ok {
+		idProp = fmt.Sprintf(` id="%s"`, target.ID)
+	}
+
+	_, err = fmt.Fprintf(w, `<h2%s><span>%s</span>.&nbsp;`, idProp, num)
 	return
 }
 
@@ -155,6 +169,8 @@ func (h *CodeHandler) Exit(w io.Writer, block *tree.InlineNode, node *tree.Node,
 }
 
 type XRefHandler struct {
+	Ctx           *meshdoc.Context
+	MapOutputFile OutputFileMapper
 }
 
 func (h *XRefHandler) Name() string {
@@ -162,7 +178,15 @@ func (h *XRefHandler) Name() string {
 }
 
 func (h *XRefHandler) Enter(w io.Writer, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	_, err = fmt.Fprintf(w, `<a href="%s">`, "TODO-target!")
+	refStore := xref.FromContext(h.Ctx)
+	target, ok := refStore.TargetByXRefNode(node)
+	if !ok {
+		return 0, ErrTargetNotFound
+	}
+
+	outputFile := h.MapOutputFile(target.Path)
+
+	_, err = fmt.Fprintf(w, `<a href="%s#%s">`, outputFile, target.ID)
 	return
 }
 

@@ -19,11 +19,14 @@ const (
 	htmlExt = ".html"
 )
 
+type OutputFileMapper func(input meshdoc.GenericPath) string
+
 type DefaultParsedWriter struct {
-	writer *html.Writer
+	writer        *html.Writer
+	mapOutputFile OutputFileMapper
 }
 
-func NewDefaultParsedWriter(ctx *meshdoc.Context) meshdoc.ParsedWriter {
+func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile OutputFileMapper) meshdoc.ParsedWriter {
 	writer := html.NewWriter()
 
 	writer.RegisterBlockHandler(&TitleHandler{Ctx: ctx})
@@ -35,7 +38,7 @@ func NewDefaultParsedWriter(ctx *meshdoc.Context) meshdoc.ParsedWriter {
 	writer.RegisterInlineHandler(&StrongHandler{})
 	writer.RegisterInlineHandler(&EmphasisHandler{})
 	writer.RegisterInlineHandler(&CodeHandler{})
-	writer.RegisterInlineHandler(&XRefHandler{})
+	writer.RegisterInlineHandler(&XRefHandler{Ctx: ctx, MapOutputFile: mapOutputFile})
 
 	return &DefaultParsedWriter{
 		writer: writer,
@@ -78,13 +81,13 @@ func (w *DefaultBookWriter) tocToWebPath(entry meshdoc.GenericPath) string {
 	return entry.SetExt(htmlExt).WebPath()
 }
 
-func (w *DefaultBookWriter) inputToOutputFileName(config *meshdoc.MeshdocConfig, input meshdoc.GenericPath) string {
-	return path.Join(config.OutputPath, input.SetExt(htmlExt).Path())
+func (w *DefaultBookWriter) getOutputFilePath(input meshdoc.GenericPath) string {
+	return input.SetExt(htmlExt).Path()
 }
 
 func (w *DefaultBookWriter) writeFile(ctx *meshdoc.Context, filePath string, tmpl *template.Template, parseTree *tree.Tree, navigations []navigation) (err error) {
 	var buf bytes.Buffer
-	renderer := NewDefaultParsedWriter(ctx)
+	renderer := NewDefaultParsedWriter(ctx, w.getOutputFilePath)
 	err = renderer.Write(&buf, parseTree.Root())
 	if err != nil {
 		return err
@@ -107,7 +110,7 @@ func (w *DefaultBookWriter) writeFile(ctx *meshdoc.Context, filePath string, tmp
 
 func (w *DefaultBookWriter) renderSnippet(ctx *meshdoc.Context, root *tree.Node) (html string, err error) {
 	var buf bytes.Buffer
-	renderer := NewDefaultParsedWriter(ctx)
+	renderer := NewDefaultParsedWriter(ctx, w.getOutputFilePath)
 	err = renderer.Write(&buf, root)
 	html = buf.String()
 	return
@@ -145,11 +148,12 @@ func (w *DefaultBookWriter) Write(ctx *meshdoc.Context, reader meshdoc.ParsedRea
 	}
 
 	for filePath, tree := range reader.Files() {
-		filePath := w.inputToOutputFileName(config, filePath)
+		outputFile := w.getOutputFilePath(filePath)
+		physicalPath := path.Join(config.OutputPath, outputFile)
 
 		log.Printf("writing to %s", filePath)
 
-		err = w.writeFile(ctx, filePath, pageTmpl, tree, navigations)
+		err = w.writeFile(ctx, physicalPath, pageTmpl, tree, navigations)
 		if err != nil {
 			return
 		}
