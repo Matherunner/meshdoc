@@ -25,20 +25,60 @@ const (
 	HTMLItemTypeText
 )
 
+type Attributes struct {
+	attrs []html.Attr
+}
+
+func NewAttributes(attrs ...html.Attr) *Attributes {
+	return &Attributes{attrs: attrs}
+}
+
+func (a *Attributes) Add(name, value string) {
+	a.attrs = append(a.attrs, html.Attr{
+		Name:  name,
+		Value: value,
+	})
+}
+
+func (a *Attributes) Has(name string) bool {
+	for _, attr := range a.attrs {
+		if attr.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *Attributes) AddIfNotExists(name, value string) {
+	if !a.Has(name) {
+		a.Add(name, value)
+	}
+}
+
+func (a *Attributes) Slice() []html.Attr {
+	return a.attrs
+}
+
 type HTMLItem interface {
 	Type() HTMLItemType
+	Attrs() *Attributes
 }
 
 type HTMLItemText struct {
 	content string
+	attrs   *Attributes
 }
 
 func NewHTMLItemText(content string) *HTMLItemText {
-	return &HTMLItemText{content: content}
+	return &HTMLItemText{content: content, attrs: NewAttributes()}
 }
 
 func (t *HTMLItemText) Type() HTMLItemType {
 	return HTMLItemTypeText
+}
+
+func (t *HTMLItemText) Attrs() *Attributes {
+	return t.attrs
 }
 
 func (t *HTMLItemText) Content() string {
@@ -47,11 +87,14 @@ func (t *HTMLItemText) Content() string {
 
 type HTMLItemTag struct {
 	tag     string
-	attrs   []html.Attr
+	attrs   *Attributes
 	tagType TagType
 }
 
-func NewHTMLItemTag(tag string, attrs []html.Attr, tagType TagType) *HTMLItemTag {
+func NewHTMLItemTag(tag string, attrs *Attributes, tagType TagType) *HTMLItemTag {
+	if attrs == nil {
+		attrs = NewAttributes()
+	}
 	return &HTMLItemTag{
 		tag:     tag,
 		attrs:   attrs,
@@ -67,7 +110,7 @@ func (t *HTMLItemTag) Tag() string {
 	return t.tag
 }
 
-func (t *HTMLItemTag) Attrs() []html.Attr {
+func (t *HTMLItemTag) Attrs() *Attributes {
 	return t.attrs
 }
 
@@ -102,7 +145,7 @@ func (h *BlockWriterHandler) writeItems(enc *html.Encoder, items []HTMLItem) {
 		switch item := item.(type) {
 		case *HTMLItemTag:
 			if item.TagType() == StartTag {
-				enc.Start(item.Tag(), item.Attrs())
+				enc.Start(item.Tag(), item.Attrs().Slice())
 			} else {
 				enc.End(item.Tag())
 			}
@@ -117,6 +160,15 @@ func (h *BlockWriterHandler) Enter(enc *html.Encoder, block *tree.BlockNode, nod
 	if err != nil {
 		return
 	}
+
+	// Add ID to the first child by default
+	if len(items) != 0 {
+		first := items[0]
+		if id, ok := block.Options().Get("ID"); ok {
+			first.Attrs().AddIfNotExists("id", id)
+		}
+	}
+
 	h.writeItems(enc, items)
 	return
 }

@@ -27,10 +27,14 @@ type DefaultParsedWriter struct {
 func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile writers.OutputFileMapper) meshdoc.ParsedWriter {
 	writer := html.NewWriter()
 
-	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, &writers.TitleHandler{}))
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewTitleHandler()))
 
-	writer.RegisterBlockHandler(&writers.H1Handler{Ctx: ctx})
-	writer.RegisterBlockHandler(&writers.H2Handler{Ctx: ctx})
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH1Handler()))
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH2Handler()))
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH3Handler()))
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH4Handler()))
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH5Handler()))
+
 	writer.RegisterBlockHandler(&writers.TOCHandler{})
 	writer.RegisterBlockHandler(&writers.ParagraphHandler{})
 

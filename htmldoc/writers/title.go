@@ -7,25 +7,28 @@ import (
 	"github.com/Matherunner/meshforce/writer/html"
 )
 
-type TitleHandler struct {
+type titleHandler struct {
 }
 
-func (h *TitleHandler) Name() string {
+func NewTitleHandler() HTMLBlockWriterHandler {
+	return &titleHandler{}
+}
+
+func (h *titleHandler) Name() string {
 	return "TITLE"
 }
 
 // TODO: wait, then how do you xref to things that don't have numbers? how to display the xref?
 
-func (h *TitleHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+func (h *titleHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
 	counters := counter.FromContext(ctx)
 	num := counters.ElementNumber(node)
 
-	items = append(
-		items,
-		NewHTMLItemTag("h1", []html.Attr{{
+	items = append(items,
+		NewHTMLItemTag("h1", NewAttributes(html.Attr{
 			Name:  "class",
 			Value: "page-header",
-		}}, StartTag),
+		}), StartTag),
 		NewHTMLItemTag("span", nil, StartTag),
 		NewHTMLItemText(num),
 		NewHTMLItemTag("span", nil, EndTag),
@@ -35,9 +38,8 @@ func (h *TitleHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *
 	return
 }
 
-func (h *TitleHandler) Exit(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error) {
-	items = append(
-		items,
+func (h *titleHandler) Exit(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error) {
+	items = append(items,
 		NewHTMLItemTag("h1", nil, EndTag),
 	)
 	return
