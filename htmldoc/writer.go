@@ -34,7 +34,7 @@ func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile writers.OutputFi
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH4Handler()))
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH5Handler()))
 
-	writer.RegisterBlockHandler(&writers.TOCHandler{})
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewTOCHandler()))
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewParagraphHandler()))
 
 	writer.RegisterInlineHandler(&writers.StrongHandler{})

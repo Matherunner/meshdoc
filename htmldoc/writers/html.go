@@ -92,7 +92,7 @@ type HTMLItemTag struct {
 }
 
 func NewHTMLItemTag(tag string, attrs *Attributes, tagType TagType) *HTMLItemTag {
-	if attrs == nil {
+	if attrs == nil && tagType == StartTag {
 		attrs = NewAttributes()
 	}
 	return &HTMLItemTag{
