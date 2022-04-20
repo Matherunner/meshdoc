@@ -23,6 +23,7 @@ type HTMLItemType int
 const (
 	HTMLItemTypeTag HTMLItemType = iota + 1
 	HTMLItemTypeText
+	HTMLItemTypeDangerousText
 )
 
 type Attributes struct {
@@ -83,6 +84,18 @@ func (t *HTMLItemText) Attrs() *Attributes {
 
 func (t *HTMLItemText) Content() string {
 	return t.content
+}
+
+type HTMLItemDangerousText struct {
+	*HTMLItemText
+}
+
+func NewHTMLItemDangerousText(content string) *HTMLItemDangerousText {
+	return &HTMLItemDangerousText{HTMLItemText: NewHTMLItemText(content)}
+}
+
+func (t *HTMLItemDangerousText) Type() HTMLItemType {
+	return HTMLItemTypeDangerousText
 }
 
 type HTMLItemTag struct {
@@ -151,6 +164,8 @@ func (h *BlockWriterHandler) writeItems(enc *html.Encoder, items []HTMLItem) {
 			}
 		case *HTMLItemText:
 			enc.Text(item.Content())
+		case *HTMLItemDangerousText:
+			enc.DangerousText(item.Content())
 		}
 	}
 }

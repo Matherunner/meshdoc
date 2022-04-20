@@ -1,0 +1,13 @@
+{
+  "name": "katex-renderer",
+  "version": "1.0.0",
+  "description": "Bespoke renderer of LaTeX equations",
+  "bin": "index.js",
+  "repository": "https://github.com/Matherunner/meshdoc",
+  "author": "Chong Jiang Wei",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "katex": "^0.15.3"
+  }
+}

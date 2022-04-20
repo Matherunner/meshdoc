@@ -1,3 +1,5 @@
 sourcePath = "./examples/simple/src"
 templatePath = "./htmldoc/templates/simple"
 outputPath = "./examples/simple/build"
+nodeExecPath = "/home/cjw/.nvm/versions/node/v16.13.1/bin/node"
+katexRendererPath = "./ext/katex-renderer"

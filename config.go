@@ -5,9 +5,11 @@ import (
 )
 
 type MeshdocConfig struct {
-	SourcePath   string
-	TemplatePath string
-	OutputPath   string
+	SourcePath        string
+	TemplatePath      string
+	OutputPath        string
+	KatexRendererPath string
+	NodeExecPath      string
 }
 
 func LoadFromFile(path string) (config *MeshdocConfig, err error) {

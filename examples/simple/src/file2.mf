@@ -24,3 +24,9 @@ Paragraph 2. Click \XREF{ID=file1-test-subsection\}[here\XREF] for a target to a
 Another subsection
 
 Paragraph 3.
+
+\MATH.[
+\mathfrak{A}(x) = \frac{360}{65536} \left\lfloor x \frac{65536}{360} \right\rfloor
+\MATH.]
+
+The above is the definition of anglemod.

@@ -31,6 +31,9 @@ func main() {
 	counterHierarchy.Add(counter.FileKey, counter.RootKey)
 	counterHierarchy.Add("H1", counter.FileKey)
 	counterHierarchy.Add("H2", "H1")
+	counterHierarchy.Add("H3", "H2")
+	counterHierarchy.Add("H4", "H3")
+	counterHierarchy.Add("H5", "H4")
 	counterOptions := &counter.Options{
 		Hierarchy: counterHierarchy,
 	}

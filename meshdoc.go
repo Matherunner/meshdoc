@@ -114,10 +114,17 @@ func newNodeDefinitions() *nodeDefinitions {
 			Name:   "TOC",
 			Struct: meshforce.BlockStructLiteral,
 			Policy: meshforce.BlockPolicyReadUntilClose,
+		}, {
+			Name:   "MATH",
+			Struct: meshforce.BlockStructLiteral,
+			Policy: meshforce.BlockPolicyReadUntilClose,
 		}},
 		inlineDefs: []meshforce.InlineDefinition{{
 			Name:   "XREF",
 			Struct: meshforce.InlineStructSimple,
+		}, {
+			Name:   "MATH",
+			Struct: meshforce.InlineStructLiteral,
 		}},
 	}
 }
