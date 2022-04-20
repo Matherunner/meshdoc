@@ -22,14 +22,14 @@ const (
 type OutputFileMapper func(input meshdoc.GenericPath) string
 
 type DefaultParsedWriter struct {
-	writer        *html.Writer
-	mapOutputFile OutputFileMapper
+	writer *html.Writer
 }
 
 func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile OutputFileMapper) meshdoc.ParsedWriter {
 	writer := html.NewWriter()
 
-	writer.RegisterBlockHandler(&TitleHandler{Ctx: ctx})
+	writer.RegisterBlockHandler(WithBlockWriterHandler(ctx, &TitleHandler{}))
+
 	writer.RegisterBlockHandler(&H1Handler{Ctx: ctx})
 	writer.RegisterBlockHandler(&H2Handler{Ctx: ctx})
 	writer.RegisterBlockHandler(&TOCHandler{})
