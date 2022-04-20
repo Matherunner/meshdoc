@@ -11,6 +11,7 @@ import (
 	"github.com/Matherunner/meshdoc"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/counter"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/toc"
+	"github.com/Matherunner/meshdoc/htmldoc/writers"
 	"github.com/Matherunner/meshforce/tree"
 	"github.com/Matherunner/meshforce/writer/html"
 )
@@ -19,26 +20,24 @@ const (
 	htmlExt = ".html"
 )
 
-type OutputFileMapper func(input meshdoc.GenericPath) string
-
 type DefaultParsedWriter struct {
 	writer *html.Writer
 }
 
-func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile OutputFileMapper) meshdoc.ParsedWriter {
+func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile writers.OutputFileMapper) meshdoc.ParsedWriter {
 	writer := html.NewWriter()
 
-	writer.RegisterBlockHandler(WithBlockWriterHandler(ctx, &TitleHandler{}))
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, &writers.TitleHandler{}))
 
-	writer.RegisterBlockHandler(&H1Handler{Ctx: ctx})
-	writer.RegisterBlockHandler(&H2Handler{Ctx: ctx})
-	writer.RegisterBlockHandler(&TOCHandler{})
-	writer.RegisterBlockHandler(&ParagraphHandler{})
+	writer.RegisterBlockHandler(&writers.H1Handler{Ctx: ctx})
+	writer.RegisterBlockHandler(&writers.H2Handler{Ctx: ctx})
+	writer.RegisterBlockHandler(&writers.TOCHandler{})
+	writer.RegisterBlockHandler(&writers.ParagraphHandler{})
 
-	writer.RegisterInlineHandler(&StrongHandler{})
-	writer.RegisterInlineHandler(&EmphasisHandler{})
-	writer.RegisterInlineHandler(&CodeHandler{})
-	writer.RegisterInlineHandler(&XRefHandler{Ctx: ctx, MapOutputFile: mapOutputFile})
+	writer.RegisterInlineHandler(&writers.StrongHandler{})
+	writer.RegisterInlineHandler(&writers.EmphasisHandler{})
+	writer.RegisterInlineHandler(&writers.CodeHandler{})
+	writer.RegisterInlineHandler(&writers.XRefHandler{Ctx: ctx, MapOutputFile: mapOutputFile})
 
 	return &DefaultParsedWriter{
 		writer: writer,

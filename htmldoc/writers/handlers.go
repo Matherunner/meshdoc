@@ -1,4 +1,4 @@
-package htmldoc
+package writers
 
 import (
 	"errors"
@@ -9,6 +9,8 @@ import (
 	"github.com/Matherunner/meshforce/tree"
 	"github.com/Matherunner/meshforce/writer/html"
 )
+
+type OutputFileMapper func(input meshdoc.GenericPath) string
 
 var (
 	ErrTargetNotFound = errors.New("target not found for xref")
