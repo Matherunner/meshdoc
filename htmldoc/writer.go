@@ -28,7 +28,6 @@ func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile writers.OutputFi
 	writer := html.NewWriter()
 
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewTitleHandler()))
-
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH1Handler()))
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH2Handler()))
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH3Handler()))
@@ -36,7 +35,7 @@ func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile writers.OutputFi
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewH5Handler()))
 
 	writer.RegisterBlockHandler(&writers.TOCHandler{})
-	writer.RegisterBlockHandler(&writers.ParagraphHandler{})
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewParagraphHandler()))
 
 	writer.RegisterInlineHandler(&writers.StrongHandler{})
 	writer.RegisterInlineHandler(&writers.EmphasisHandler{})

@@ -1,23 +1,31 @@
 package writers
 
 import (
+	"github.com/Matherunner/meshdoc"
 	"github.com/Matherunner/meshforce/tree"
-	"github.com/Matherunner/meshforce/writer/html"
 )
 
-type ParagraphHandler struct {
+type paragraphHandler struct {
 }
 
-func (h *ParagraphHandler) Name() string {
+func NewParagraphHandler() HTMLBlockWriterHandler {
+	return &paragraphHandler{}
+}
+
+func (h *paragraphHandler) Name() string {
 	return "P"
 }
 
-func (t *ParagraphHandler) Enter(enc *html.Encoder, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	err = enc.Start("p", nil)
+func (h *paragraphHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+	items = append(items,
+		NewHTMLItemTag("p", nil, StartTag),
+	)
 	return
 }
 
-func (t *ParagraphHandler) Exit(enc *html.Encoder, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (err error) {
-	err = enc.End("p")
+func (h *paragraphHandler) Exit(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error) {
+	items = append(items,
+		NewHTMLItemTag("p", nil, EndTag),
+	)
 	return
 }
