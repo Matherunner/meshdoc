@@ -28,6 +28,12 @@ func (h *mathBlockHandler) Name() string {
 }
 
 func (h *mathBlockHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+	type mathInput struct {
+		Input   string            `json:"input"`
+		Display bool              `json:"display"`
+		Macros  map[string]string `json:"macros"`
+	}
+
 	config := ctx.Config()
 	if config.KatexRendererPath == "" {
 		err = ErrKatexRendererPathNotSet
@@ -42,10 +48,6 @@ func (h *mathBlockHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, no
 		NewHTMLItemTag("div", nil, StartTag),
 	)
 
-	// FIXME: need to gather the text again, should define a common function for this!
-
-	// TODO: run JS to generate HTML
-
 	entryJS := path.Join(config.KatexRendererPath, "index.js")
 	cmd := exec.Command(config.NodeExecPath, entryJS)
 	wc, err := cmd.StdinPipe()
@@ -55,7 +57,14 @@ func (h *mathBlockHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, no
 
 	go func() {
 		defer wc.Close()
-		fmt.Fprintf(wc, "[{\"input\":\"\\\\int \\\\sqrt{v^2 + k t} \\\\: dt = \\\\frac{3}{2} \\\\frac{\\\\sqrt{v^2 + k t}}{k} + c\", \"display\": true}]")
+
+		content := tree.CoalesceStringContent(node)
+		enc := json.NewEncoder(wc)
+		enc.Encode([]mathInput{{
+			Input:   content,
+			Display: true,
+			Macros:  map[string]string{},
+		}})
 	}()
 
 	out, err := cmd.CombinedOutput()
