@@ -7,6 +7,7 @@ import (
 	"github.com/Matherunner/meshdoc"
 	"github.com/Matherunner/meshdoc/htmldoc"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/counter"
+	"github.com/Matherunner/meshdoc/htmldoc/processors/theorem"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/toc"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/xref"
 )
@@ -47,6 +48,7 @@ func main() {
 			// ParsedWriter:  htmldoc.NewDefaultParsedWriter, // TODO: not used?
 			Preprocessors: []meshdoc.Preprocessor{},
 			Postprocessors: []meshdoc.Postprocessor{
+				theorem.NewTheoremProcessor(),
 				toc.NewTOC(),
 				counter.NewCounter(counterOptions),
 				xref.NewXRef(),
