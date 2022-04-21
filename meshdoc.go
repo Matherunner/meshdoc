@@ -118,6 +118,10 @@ func newNodeDefinitions() *nodeDefinitions {
 			Name:   "MATH",
 			Struct: meshforce.BlockStructLiteral,
 			Policy: meshforce.BlockPolicyReadUntilClose,
+		}, {
+			Name:   "THEOREM",
+			Struct: meshforce.BlockStructSimple,
+			Policy: meshforce.BlockPolicyReadUntilClose,
 		}},
 		inlineDefs: []meshforce.InlineDefinition{{
 			Name:   "XREF",

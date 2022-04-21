@@ -26,7 +26,19 @@ Another subsection
 Paragraph 3.
 
 \MATH.[
-\mathfrak{A}(x) = \frac{360}{65536} \left\lfloor x \frac{65536}{360} \right\rfloor
+\mathfrak{A}(x) = \frac{360}{65536} \left( \operatorname{int}\left( x \frac{65536}{360} \right) \odot 65535 \right)
+= u \left( \operatorname{int}\left( xu^{-1} \right) \odot \left( 2^{16} - 1 \right) \right)
 \MATH.]
 
-The above is the definition of anglemod.
+The above is the definition of anglemod. It can be shown that when the argument is negative, this is equivalent to quantising it then wrap around to positive. This is proved in the following.
+
+\THEOREM.[
+Anglemod is equivalent to the following function.
+
+\MATH..[
+\begin{cases}
+u \left( \operatorname{int}\left( xu^{-1} \right) \bmod 2^{16} \right) & x \ge 0 \\
+u \left( \left( \operatorname{int}\left( xu^{-1} \right) \bmod 2^{16} \right) + 2^{16} \right) & x < 0
+\end{cases}
+\MATH..]
+\THEOREM.]
