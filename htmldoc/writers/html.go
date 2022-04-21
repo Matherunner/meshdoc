@@ -131,10 +131,43 @@ func (t *HTMLItemTag) TagType() TagType {
 	return t.tagType
 }
 
+func encodeHTMLItems(enc *html.Encoder, items []HTMLItem) {
+	for _, item := range items {
+		switch item := item.(type) {
+		case *HTMLItemTag:
+			if item.TagType() == StartTag {
+				enc.Start(item.Tag(), item.Attrs().Slice())
+			} else {
+				enc.End(item.Tag())
+			}
+		case *HTMLItemText:
+			enc.Text(item.Content())
+		case *HTMLItemDangerousText:
+			enc.DangerousText(item.Content())
+		}
+	}
+}
+
+func addIDToFirstItem(options tree.NodeOptionList, items []HTMLItem) {
+	// Add ID to the first child by default
+	if len(items) != 0 {
+		first := items[0]
+		if id, ok := options.Get("ID"); ok {
+			first.Attrs().AddIfNotExists("id", id)
+		}
+	}
+}
+
 type HTMLBlockWriterHandler interface {
 	Name() string
 	Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error)
 	Exit(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error)
+}
+
+type HTMLInlineWriterHandler interface {
+	Name() string
+	Enter(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error)
+	Exit(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error)
 }
 
 type BlockWriterHandler struct {
@@ -153,38 +186,15 @@ func (h *BlockWriterHandler) Name() string {
 	return h.wrapped.Name()
 }
 
-func (h *BlockWriterHandler) writeItems(enc *html.Encoder, items []HTMLItem) {
-	for _, item := range items {
-		switch item := item.(type) {
-		case *HTMLItemTag:
-			if item.TagType() == StartTag {
-				enc.Start(item.Tag(), item.Attrs().Slice())
-			} else {
-				enc.End(item.Tag())
-			}
-		case *HTMLItemText:
-			enc.Text(item.Content())
-		case *HTMLItemDangerousText:
-			enc.DangerousText(item.Content())
-		}
-	}
-}
-
 func (h *BlockWriterHandler) Enter(enc *html.Encoder, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
 	items, instruction, err := h.wrapped.Enter(h.ctx, block, node, stack)
 	if err != nil {
 		return
 	}
 
-	// Add ID to the first child by default
-	if len(items) != 0 {
-		first := items[0]
-		if id, ok := block.Options().Get("ID"); ok {
-			first.Attrs().AddIfNotExists("id", id)
-		}
-	}
+	addIDToFirstItem(block.Options(), items)
 
-	h.writeItems(enc, items)
+	encodeHTMLItems(enc, items)
 	return
 }
 
@@ -193,6 +203,45 @@ func (h *BlockWriterHandler) Exit(enc *html.Encoder, block *tree.BlockNode, node
 	if err != nil {
 		return
 	}
-	h.writeItems(enc, items)
+
+	encodeHTMLItems(enc, items)
+	return
+}
+
+type InlineWriterHandler struct {
+	ctx     *meshdoc.Context
+	wrapped HTMLInlineWriterHandler
+}
+
+func WithInlineWriterHandler(ctx *meshdoc.Context, wrapped HTMLInlineWriterHandler) *InlineWriterHandler {
+	return &InlineWriterHandler{
+		ctx:     ctx,
+		wrapped: wrapped,
+	}
+}
+
+func (h *InlineWriterHandler) Name() string {
+	return h.wrapped.Name()
+}
+
+func (h *InlineWriterHandler) Enter(enc *html.Encoder, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
+	items, instruction, err := h.wrapped.Enter(h.ctx, inline, node, stack)
+	if err != nil {
+		return
+	}
+
+	addIDToFirstItem(inline.Options(), items)
+
+	encodeHTMLItems(enc, items)
+	return
+}
+
+func (h *InlineWriterHandler) Exit(enc *html.Encoder, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (err error) {
+	items, err := h.wrapped.Exit(h.ctx, inline, node, stack)
+	if err != nil {
+		return
+	}
+
+	encodeHTMLItems(enc, items)
 	return
 }

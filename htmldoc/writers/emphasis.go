@@ -1,23 +1,31 @@
 package writers
 
 import (
+	"github.com/Matherunner/meshdoc"
 	"github.com/Matherunner/meshforce/tree"
-	"github.com/Matherunner/meshforce/writer/html"
 )
 
-type EmphasisHandler struct {
+type emphasisHandler struct {
 }
 
-func (h *EmphasisHandler) Name() string {
+func NewEmphasisHandler() HTMLInlineWriterHandler {
+	return &emphasisHandler{}
+}
+
+func (h *emphasisHandler) Name() string {
 	return "E"
 }
 
-func (h *EmphasisHandler) Enter(enc *html.Encoder, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	err = enc.Start("em", nil)
+func (h *emphasisHandler) Enter(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+	items = append(items,
+		NewHTMLItemTag("em", nil, StartTag),
+	)
 	return
 }
 
-func (h *EmphasisHandler) Exit(enc *html.Encoder, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (err error) {
-	err = enc.End("em")
+func (h *emphasisHandler) Exit(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error) {
+	items = append(items,
+		NewHTMLItemTag("em", nil, EndTag),
+	)
 	return
 }

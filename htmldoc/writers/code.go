@@ -1,23 +1,31 @@
 package writers
 
 import (
+	"github.com/Matherunner/meshdoc"
 	"github.com/Matherunner/meshforce/tree"
-	"github.com/Matherunner/meshforce/writer/html"
 )
 
-type CodeHandler struct {
+type codeHandler struct {
 }
 
-func (h *CodeHandler) Name() string {
+func NewCodeHandler() HTMLInlineWriterHandler {
+	return &codeHandler{}
+}
+
+func (h *codeHandler) Name() string {
 	return "C"
 }
 
-func (h *CodeHandler) Enter(enc *html.Encoder, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	err = enc.Start("code", nil)
+func (h *codeHandler) Enter(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+	items = append(items,
+		NewHTMLItemTag("code", nil, StartTag),
+	)
 	return
 }
 
-func (h *CodeHandler) Exit(enc *html.Encoder, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (err error) {
-	err = enc.End("code")
+func (h *codeHandler) Exit(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error) {
+	items = append(items,
+		NewHTMLItemTag("code", nil, EndTag),
+	)
 	return
 }

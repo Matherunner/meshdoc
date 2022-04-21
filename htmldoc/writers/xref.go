@@ -15,34 +15,39 @@ var (
 	ErrTargetNotFound = errors.New("target not found for xref")
 )
 
-type XRefHandler struct {
-	Ctx           *meshdoc.Context
-	MapOutputFile OutputFileMapper
+type xrefHandler struct {
+	mapOutputFile OutputFileMapper
 }
 
-func (h *XRefHandler) Name() string {
+func NewXRefHandler(mapOutputFile OutputFileMapper) HTMLInlineWriterHandler {
+	return &xrefHandler{mapOutputFile: mapOutputFile}
+}
+
+func (h *xrefHandler) Name() string {
 	return "XREF"
 }
 
-func (h *XRefHandler) Enter(enc *html.Encoder, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (instruction tree.VisitInstruction, err error) {
-	refStore := xref.FromContext(h.Ctx)
+func (h *xrefHandler) Enter(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+	refStore := xref.FromContext(ctx)
 	target, ok := refStore.TargetByXRefNode(node)
 	if !ok {
-		return 0, ErrTargetNotFound
+		err = ErrTargetNotFound
+		return
 	}
 
-	outputFile := h.MapOutputFile(target.Path)
-
-	attrs := []html.Attr{{
-		Name:  "href",
-		Value: outputFile + "#" + target.ID,
-	}}
-
-	err = enc.Start("a", attrs)
+	outputFile := h.mapOutputFile(target.Path)
+	items = append(items,
+		NewHTMLItemTag("a", NewAttributes(html.Attr{
+			Name:  "href",
+			Value: outputFile + "#" + target.ID,
+		}), StartTag),
+	)
 	return
 }
 
-func (h *XRefHandler) Exit(enc *html.Encoder, block *tree.InlineNode, node *tree.Node, stack []*tree.Node) (err error) {
-	err = enc.End("a")
+func (h *xrefHandler) Exit(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error) {
+	items = append(items,
+		NewHTMLItemTag("a", nil, EndTag),
+	)
 	return
 }

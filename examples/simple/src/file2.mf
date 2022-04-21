@@ -30,7 +30,7 @@ Paragraph 3.
 = u \left( \operatorname{int}\left( xu^{-1} \right) \odot \left( 2^{16} - 1 \right) \right)
 \MATH.]
 
-The above is the definition of anglemod. It can be shown that when the argument is negative, this is equivalent to quantising it then wrap around to positive. This is proved in the following.
+The above is the definition of anglemod. It can be shown that when the argument \MATH[x\MATH] is negative, this is equivalent to quantising it then wrap around to positive. This is proved in the following.
 
 \THEOREM.[
 Anglemod is equivalent to the following function.

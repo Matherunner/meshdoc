@@ -16,40 +16,30 @@ var (
 	ErrNodeExecNotSet          = errors.New("node executable path not set in config")
 )
 
-type mathBlockHandler struct {
+func getRendererPaths(ctx *meshdoc.Context) (nodePath, rendererPath string, err error) {
+	config := ctx.Config()
+	nodePath = config.NodeExecPath
+	rendererPath = config.KatexRendererPath
+	if rendererPath == "" {
+		err = ErrKatexRendererPathNotSet
+		return
+	}
+	if nodePath == "" {
+		err = ErrNodeExecNotSet
+		return
+	}
+	return
 }
 
-func NewMathBlockHandler() HTMLBlockWriterHandler {
-	return &mathBlockHandler{}
-}
-
-func (h *mathBlockHandler) Name() string {
-	return "MATH"
-}
-
-func (h *mathBlockHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+func renderByKatex(node *tree.Node, displayMode bool, nodePath, rendererPath string) (html string, err error) {
 	type mathInput struct {
 		Input   string            `json:"input"`
 		Display bool              `json:"display"`
 		Macros  map[string]string `json:"macros"`
 	}
 
-	config := ctx.Config()
-	if config.KatexRendererPath == "" {
-		err = ErrKatexRendererPathNotSet
-		return
-	}
-	if config.NodeExecPath == "" {
-		err = ErrNodeExecNotSet
-		return
-	}
-
-	items = append(items,
-		NewHTMLItemTag("div", nil, StartTag),
-	)
-
-	entryJS := path.Join(config.KatexRendererPath, "index.js")
-	cmd := exec.Command(config.NodeExecPath, entryJS)
+	entryJS := path.Join(rendererPath, "index.js")
+	cmd := exec.Command(nodePath, entryJS)
 	wc, err := cmd.StdinPipe()
 	if err != nil {
 		return
@@ -62,7 +52,7 @@ func (h *mathBlockHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, no
 		enc := json.NewEncoder(wc)
 		enc.Encode([]mathInput{{
 			Input:   content,
-			Display: true,
+			Display: displayMode,
 			Macros:  map[string]string{},
 		}})
 	}()
@@ -79,8 +69,74 @@ func (h *mathBlockHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, no
 		return
 	}
 
+	html = outHTMLs[0]
+	return
+}
+
+type mathInlineHandler struct {
+}
+
+func NewMathInlineHandler() HTMLInlineWriterHandler {
+	return &mathInlineHandler{}
+}
+
+func (h *mathInlineHandler) Name() string {
+	return "MATH"
+}
+
+func (h *mathInlineHandler) Enter(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+	nodePath, rendererPath, err := getRendererPaths(ctx)
+	if err != nil {
+		return
+	}
+
+	html, err := renderByKatex(node, false, nodePath, rendererPath)
+	if err != nil {
+		return
+	}
+
 	items = append(items,
-		NewHTMLItemDangerousText(outHTMLs[0]),
+		NewHTMLItemTag("span", nil, StartTag),
+		NewHTMLItemDangerousText(html),
+	)
+
+	instruction = tree.InstructionIgnoreChild
+
+	return
+}
+
+func (h *mathInlineHandler) Exit(ctx *meshdoc.Context, inline *tree.InlineNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error) {
+	items = append(items,
+		NewHTMLItemTag("span", nil, EndTag),
+	)
+	return
+}
+
+type mathBlockHandler struct {
+}
+
+func NewMathBlockHandler() HTMLBlockWriterHandler {
+	return &mathBlockHandler{}
+}
+
+func (h *mathBlockHandler) Name() string {
+	return "MATH"
+}
+
+func (h *mathBlockHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, instruction tree.VisitInstruction, err error) {
+	nodePath, rendererPath, err := getRendererPaths(ctx)
+	if err != nil {
+		return
+	}
+
+	html, err := renderByKatex(node, true, nodePath, rendererPath)
+	if err != nil {
+		return
+	}
+
+	items = append(items,
+		NewHTMLItemTag("div", nil, StartTag),
+		NewHTMLItemDangerousText(html),
 	)
 
 	instruction = tree.InstructionIgnoreChild

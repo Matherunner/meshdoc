@@ -40,10 +40,11 @@ func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile writers.OutputFi
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewMathBlockHandler()))
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewTheoremHandler()))
 
-	writer.RegisterInlineHandler(&writers.StrongHandler{})
-	writer.RegisterInlineHandler(&writers.EmphasisHandler{})
-	writer.RegisterInlineHandler(&writers.CodeHandler{})
-	writer.RegisterInlineHandler(&writers.XRefHandler{Ctx: ctx, MapOutputFile: mapOutputFile})
+	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewStrongHandler()))
+	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewEmphasisHandler()))
+	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewCodeHandler()))
+	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewXRefHandler(mapOutputFile)))
+	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewMathInlineHandler()))
 
 	return &DefaultParsedWriter{
 		writer: writer,
