@@ -72,15 +72,29 @@ func (h *valueHierarchy) Increment(key interface{}) (incremented bool) {
 		return false
 	}
 
-	_, ok = h.nodeByKey[key]
+	node, ok := h.nodeByKey[key]
 	if ok {
-		// Found in the map, which means this key is either an ancestor of cur, or cur itself
-		// Traverse up the ancestry path, and remove nodes along the way
-		for h.cur.Key != key {
-			delete(h.nodeByKey, h.cur.Key)
-			h.cur = h.cur.Parent
-			h.cur.Children = nil
+		// Found in the map, which means this key is either an ancestor of cur, a sibling with a common ancestor,
+		// or cur itself.
+		h.cur = node
+
+		// Delete the descendents and their record in nodeByKey
+		stack := []*valueNode{node}
+		visited := map[*valueNode]bool{}
+		for len(stack) != 0 {
+			idx := len(stack) - 1
+			cur := stack[idx]
+			stack[idx] = nil
+			stack = stack[:idx]
+
+			if _, ok := visited[cur]; ok {
+				delete(h.nodeByKey, cur.Key)
+			} else {
+				visited[cur] = true
+				stack = append(stack, cur.Children...)
+			}
 		}
+
 		h.cur.Value++
 	} else {
 		// Not found in the map, so this is some new child with a common ancestor

@@ -27,7 +27,7 @@ func (p *theoremProcessor) Process(ctx *meshdoc.Context, r meshdoc.ParsedReader)
 			if !ok {
 				continue
 			}
-			if block.Name() != "THEOREM" {
+			if block.Name() != "THEOREM" && block.Name() != "PROOF" {
 				continue
 			}
 			if node.Child == nil {

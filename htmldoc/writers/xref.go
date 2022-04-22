@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Matherunner/meshdoc"
+	"github.com/Matherunner/meshdoc/htmldoc/processors/counter"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/xref"
 	"github.com/Matherunner/meshforce/tree"
 	"github.com/Matherunner/meshforce/writer/html"
@@ -42,6 +43,20 @@ func (h *xrefHandler) Enter(ctx *meshdoc.Context, inline *tree.InlineNode, node 
 			Value: outputFile + "#" + target.ID,
 		}), StartTag),
 	)
+
+	ans, ok := inline.Options().Get("AUTONUMBER")
+	if ok && ans == "yes" {
+		counters := counter.FromContext(ctx)
+		num := counters.ElementNumber(target.Node)
+		if num != "" {
+			items = append(items,
+				NewHTMLItemText(num),
+			)
+
+			instruction = tree.InstructionIgnoreChild
+		}
+	}
+
 	return
 }
 

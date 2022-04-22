@@ -21,24 +21,127 @@ Paragraph 1.
 Paragraph 2. Click \XREF{ID=file1-test-subsection\}[here\XREF] for a target to a subsection in \C[file1\C].
 
 \H2.
-Another subsection
+Angle quantisation function
 
-Paragraph 3.
+The player view angles are stored as single-precision floating-point numbers on the server side. However, the values are always quantised to only 65536 possible values uniformly dividing 360 degrees. The gap between adjacent quantised values is \MATH[u_d = 360 / 65536 \approx 0.00549\MATH] degrees, and this is also the maximum quantisation error for an arbitrary angle. This error is fairly small and completely invisible to a casual player. However, if not accounted for, the quantisation of angles can result in inaccurate player movement and input control.
 
-\MATH.[
-\mathfrak{A}(x) = \frac{360}{65536} \left( \operatorname{int}\left( x \frac{65536}{360} \right) \odot 65535 \right)
-= u \left( \operatorname{int}\left( xu^{-1} \right) \odot \left( 2^{16} - 1 \right) \right)
-\MATH.]
+The quantisation of angles is done multiple times from the movement of the mouse to the simulation of physics on the server. Firstly, the angles are quantised when the client constructs an input command. In addition, quantisation is done before transmission across the network from client to server. In fact, the client only transmits a 16-bit integer representing all possible 65536 values of the angle to the server, rather than the full 32-bit floating-point number, thus saving two bytes per angle per input command. Perhaps in 1998, these savings would have been crucial in keeping HLDM playable over a dial-up connection on a Pentium II.
 
-The above is the definition of anglemod. It can be shown that when the argument \MATH[x\MATH] is negative, this is equivalent to quantising it then wrap around to positive. This is proved in the following.
+It is critical to understand how the angle quantisation works in Half-Life. We first make clear our definition of the modulo operation.
 
-\THEOREM.[
-Anglemod is equivalent to the following function.
+\THEOREM.{NAME=Definition\,ID=binary-modulo\}[
+The binary modulo operation is defined as
 
 \MATH..[
-\begin{cases}
-u \left( \operatorname{int}\left( xu^{-1} \right) \bmod 2^{16} \right) & x \ge 0 \\
-u \left( \left( \operatorname{int}\left( xu^{-1} \right) \bmod 2^{16} \right) + 2^{16} \right) & x < 0
-\end{cases}
+a \bmod b = a - b \left\lfloor \frac{a}{b} \right\rfloor
 \MATH..]
 \THEOREM.]
+
+This definition of the modulo operation may not be what you are used to. For example, \MATH[-4 \bmod 10 = 6\MATH]. If you were to write \C[-4 % 10\C] in JavaScript, you would get back \C[-4\C]. The same is true for C, C++, Go, and the Internet's favourite programming language, Rust. Python is a notable exception to this. This is not an attempt to wage a holy war, merely to clarify what we mean in subsequent discussions. As you will see, the definition above gives rise to a natural understanding of the quantisation function.
+
+\THEOREM.{NAME=Definition\}[
+The \E[degrees-anglemod\E] function may be defined as follows.
+
+\MATH..[
+\mathfrak{A}_d(x) = \frac{360}{65536} \left( \operatorname{trunc}\left( x \frac{65536}{360} \right) \odot 65535 \right)
+= u_d \left( \operatorname{trunc}\left( xu_d^{-1} \right) \odot \left( 2^{16} - 1 \right) \right)
+\MATH..]
+
+where \MATH[\operatorname{trunc}(x)\MATH] is the \E[integer truncation\E] of some real number \MATH[x\MATH], or simply \E[rounding towards zero\E] of said number, and \MATH[a \odot b\MATH] is the bitwise AND operation of integers \MATH[a\MATH] and \MATH[b\MATH].
+\THEOREM.]
+
+\THEOREM.{NAME=Definition\}[
+The \E[radians-anglemod\E] function is similarly defined as
+
+\MATH..[
+\mathfrak{A}_r(x) = \frac{2 \pi}{65536} \left( \operatorname{trunc}\left( x \frac{65536}{2 \pi} \right) \odot 65535 \right)
+= u_r \left( \operatorname{trunc}\left( xu_r^{-1} \right) \odot \left( 2^{16} - 1 \right) \right)
+\MATH..]
+\THEOREM.]
+
+The above is the definition of anglemod, the angle quantisation function used in Half-Life for player angles. If you stare at the function long enough, you can glean from it some ideas about how it works. Intuitively, it first scales up the input angle by a fairly large amount, then applies an integer truncation. This introduces a truncation or quantisation error. The result is then wrapped to a range of \MATH[[0, 65535]\MATH], and \E[along with the quantisation error\E], the result is scaled back down. The function boils down to two operations: truncation and modulo.
+
+It is worth noting that \MATH[\mathfrak{A}_d(x) \in [0, 360)\MATH] for all \MATH[x\MATH], even negative ones. This fact may not be immediately obvious from the definitions above. We will attempt to prove it.
+
+\THEOREM.[
+Let \MATH[a\MATH] and \MATH[p\MATH] be integers with \MATH[p \ge 0\MATH] and \MATH[a\MATH] possibly negative. Suppose further that \MATH[a\MATH] is in fact an \MATH[n\MATH]-bit signed integer in two's complement, with \MATH[p < n\MATH]. Then
+
+\MATH..[
+a \odot \left( 2^p - 1 \right) = a \bmod 2^p
+\MATH..]
+\THEOREM.]
+
+\PROOF.[
+When \MATH[a\MATH] is positive, this equivalence should be self-evident with some experience in programming. Suppose \MATH[a < 0\MATH]. By two's complement, if we reinterpret the same bits of \MATH[a\MATH] as an \E[unsigned\E] integer, the value is the positive integer \MATH[2^n + a\MATH]. Observe that
+
+\MATH..[
+\left(2^n + a\right) \odot \left(2^p - 1\right) = \left(2^n + a\right) \bmod 2^p
+\MATH..]
+
+This is because the first argument to the bitwise AND operation is positive, and we have already established this equality in this case. On the other hand, from the definition of modulo in Definition \XREF{ID=binary-modulo\,AUTONUMBER=yes\}[\XREF], we have
+
+\MATH..[
+\begin{aligned}
+\left(2^n + a\right) \bmod 2^p &= 2^n + a - 2^p \left\lfloor \frac{2^n + a}{2^p} \right\rfloor \\
+&= a - 2^p \left\lfloor \frac{a}{2^p} \right\rfloor \\
+&= a \bmod 2^p
+\end{aligned}
+\MATH..]
+
+If we now reinterpret the resulting bits as a signed integer, the value does not change, because not only is the most significant bit removed by the bitwise AND, due to the fact that \MATH[p < n\MATH], but also the output of a modulo operation is always positive by definition.
+\PROOF.]
+
+\THEOREM.{NAME=Corollary\}[
+The degrees-anglemod function is equivalent to
+
+\MATH..[
+\mathfrak{A}_d(x) = u_d \left( \operatorname{trunc}\left( xu_d^{-1} \right) \bmod 2^{16} \right)
+\MATH..]
+
+Similarly, the radians-anglemod function is equivalent to
+
+\MATH..[
+\mathfrak{A}_r(x) = u_r \left( \operatorname{trunc}\left( xu_r^{-1} \right) \bmod 2^{16} \right)
+\MATH..]
+\THEOREM.]
+
+\H2.
+Punch angles
+
+The punch angles are a tuple of yaw, pitch, and roll \MATH[(\vartheta_p, \varphi_p, \varrho_p)\MATH] added to the current player view angles.
+
+The punch angle gradually decays over time to zero. The decaying equation is defined as follows.
+
+\THEOREM.{NAME=Definition\}[
+Let \MATH[\mathbf{P} = \langle \vartheta_p, \varphi_p, \varrho_p \rangle\MATH]. Let \MATH[\tau_n\MATH] be the frame time at \MATH[n\MATH]. Then the punch angles at frame \MATH[n\MATH] are given by the recurrence relation
+
+\MATH..[
+\mathbf{P}_{n+1} = \max\left( 0, \lVert\mathbf{P}_n\rVert \left( 1 - \frac{1}{2} \tau_n \right) - 10 \tau_n \right) \mathbf{\hat{P}}_n
+\MATH..]
+\THEOREM.]
+
+\THEOREM.[
+Suppose the new punch angles \MATH[\mathbf{P}_{n+1} \ne \mathbf{0}\MATH]. The decay rate is independent of the frame rate.
+\THEOREM.]
+
+\PROOF.[
+Since \MATH[\mathbf{P}_{n+1} \ne \mathbf{0}\MATH], we can simplify the recurrence relation to
+
+\MATH..[
+\mathbf{P}_{n+1} = \mathbf{P}_n \left( 1 - \frac{1}{2} \tau_n \right) - 10 \tau_n \mathbf{\hat{P}}_n
+\MATH..]
+
+Consider the magnitude of the vectors, it can be shown that
+
+\MATH..[
+\lVert\mathbf{P}_{n+1}\rVert = \lVert\mathbf{P}_n\rVert \left(1 - \frac{1}{2} \tau_n\right) - 10 \tau_n
+\MATH..]
+
+Subtracting the current magnitude and dividing by the frame time, we obtain
+
+FIXME: FIXME: FIXME: just solve the recurrence relation
+
+\MATH..[
+\frac{\lVert\mathbf{P}_{n+1}\rVert - \lVert\mathbf{P}_n\rVert}{\tau_n} = -\frac{1}{2} \lVert\mathbf{P}_n\rVert - 10 \approx \frac{d \lVert\mathbf{P}_t\rVert}{dt}
+\MATH..]
+\PROOF.]

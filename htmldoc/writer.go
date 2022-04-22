@@ -39,6 +39,7 @@ func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile writers.OutputFi
 
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewMathBlockHandler()))
 	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewTheoremHandler()))
+	writer.RegisterBlockHandler(writers.WithBlockWriterHandler(ctx, writers.NewProofHandler()))
 
 	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewStrongHandler()))
 	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewEmphasisHandler()))
