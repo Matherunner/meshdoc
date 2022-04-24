@@ -148,7 +148,11 @@ func encodeHTMLItems(enc *html.Encoder, items []HTMLItem) {
 	}
 }
 
-func addIDToFirstItem(options tree.NodeOptionList, items []HTMLItem) {
+func addIDToFirstItem(name string, options tree.NodeOptionList, items []HTMLItem) {
+	if name == "XREF" {
+		// TODO: maybe don't do this? change the "ID" to another name for XREF, it might create confusion
+		return
+	}
 	// Add ID to the first child by default
 	if len(items) != 0 {
 		first := items[0]
@@ -192,7 +196,7 @@ func (h *BlockWriterHandler) Enter(enc *html.Encoder, block *tree.BlockNode, nod
 		return
 	}
 
-	addIDToFirstItem(block.Options(), items)
+	addIDToFirstItem(block.Name(), block.Options(), items)
 
 	encodeHTMLItems(enc, items)
 	return
@@ -230,7 +234,7 @@ func (h *InlineWriterHandler) Enter(enc *html.Encoder, inline *tree.InlineNode, 
 		return
 	}
 
-	addIDToFirstItem(inline.Options(), items)
+	addIDToFirstItem(inline.Name(), inline.Options(), items)
 
 	encodeHTMLItems(enc, items)
 	return

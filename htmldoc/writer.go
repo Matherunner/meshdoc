@@ -46,6 +46,7 @@ func NewDefaultParsedWriter(ctx *meshdoc.Context, mapOutputFile writers.OutputFi
 	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewCodeHandler()))
 	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewXRefHandler(mapOutputFile)))
 	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewMathInlineHandler()))
+	writer.RegisterInlineHandler(writers.WithInlineWriterHandler(ctx, writers.NewHyperlinkHandler()))
 
 	return &DefaultParsedWriter{
 		writer: writer,

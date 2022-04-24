@@ -85,6 +85,12 @@ func (h *proofHandler) Enter(ctx *meshdoc.Context, block *tree.BlockNode, node *
 
 func (h *proofHandler) Exit(ctx *meshdoc.Context, block *tree.BlockNode, node *tree.Node, stack []*tree.Node) (items []HTMLItem, err error) {
 	items = append(items,
+		NewHTMLItemTag("div", NewAttributes(html.Attr{
+			Name:  "class",
+			Value: "proof-qed",
+		}), StartTag),
+		NewHTMLItemText("\u220E"),
+		NewHTMLItemTag("div", nil, EndTag),
 		NewHTMLItemTag("div", nil, EndTag),
 	)
 	return

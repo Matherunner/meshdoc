@@ -112,7 +112,7 @@ The punch angles are a tuple of yaw, pitch, and roll \MATH[(\vartheta_p, \varphi
 
 The punch angle gradually decays over time to zero. The decaying equation is defined as follows.
 
-\THEOREM.{NAME=Definition\}[
+\THEOREM.{NAME=Definition\,ID=punch-decay\}[
 Let \MATH[\mathbf{P} = \langle \vartheta_p, \varphi_p, \varrho_p \rangle\MATH]. Let \MATH[\tau_n\MATH] be the frame time at \MATH[n\MATH]. Then the punch angles at frame \MATH[n\MATH] are given by the recurrence relation
 
 \MATH..[
@@ -120,28 +120,14 @@ Let \MATH[\mathbf{P} = \langle \vartheta_p, \varphi_p, \varrho_p \rangle\MATH]. 
 \MATH..]
 \THEOREM.]
 
-\THEOREM.[
-Suppose the new punch angles \MATH[\mathbf{P}_{n+1} \ne \mathbf{0}\MATH]. The decay rate is independent of the frame rate.
-\THEOREM.]
+Assuming the frame time is constant and the \MATH[\max\MATH] factor in the definition never go below zero, the solution to the recurrence relation may be written as
 
-\PROOF.[
-Since \MATH[\mathbf{P}_{n+1} \ne \mathbf{0}\MATH], we can simplify the recurrence relation to
+\MATH.[
+\mathbf{P}_n = \left( \mathbf{P}_n + 20 \mathbf{\hat{P}}_0 \right) \left( 1 - \frac{1}{2} \tau \right)^n - 20 \mathbf{\hat{P}}_0
+\MATH.]
 
-\MATH..[
-\mathbf{P}_{n+1} = \mathbf{P}_n \left( 1 - \frac{1}{2} \tau_n \right) - 10 \tau_n \mathbf{\hat{P}}_n
-\MATH..]
+We see that the punch angles decay exponentially over time.
 
-Consider the magnitude of the vectors, it can be shown that
+In practice, the punch angles are rarely a problem except when punch row and punch roll nonzero. This can negatively affect movement control by strafing. Certain monsters, such as the zombie and the Gargantua, can impart punch yaws and rolls to the player when attacking in melee.
 
-\MATH..[
-\lVert\mathbf{P}_{n+1}\rVert = \lVert\mathbf{P}_n\rVert \left(1 - \frac{1}{2} \tau_n\right) - 10 \tau_n
-\MATH..]
-
-Subtracting the current magnitude and dividing by the frame time, we obtain
-
-FIXME: FIXME: FIXME: just solve the recurrence relation
-
-\MATH..[
-\frac{\lVert\mathbf{P}_{n+1}\rVert - \lVert\mathbf{P}_n\rVert}{\tau_n} = -\frac{1}{2} \lVert\mathbf{P}_n\rVert - 10 \approx \frac{d \lVert\mathbf{P}_t\rVert}{dt}
-\MATH..]
-\PROOF.]
+It is also worth noting that after doing a saveload, the punch angles will be added to the view angles permanently, and then the punch angles will be set to zero. When this happens, the view angles will not decay according to Definition \XREF{ID=punch-decay\,AUTONUMBER=yes\}[\XREF].

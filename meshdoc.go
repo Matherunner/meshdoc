@@ -133,6 +133,9 @@ func newNodeDefinitions() *nodeDefinitions {
 		}, {
 			Name:   "MATH",
 			Struct: meshforce.InlineStructLiteral,
+		}, {
+			Name:   "A",
+			Struct: meshforce.InlineStructSimple,
 		}},
 	}
 }

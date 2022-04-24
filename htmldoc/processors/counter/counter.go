@@ -80,19 +80,15 @@ func (h *valueHierarchy) Increment(key interface{}) (incremented bool) {
 
 		// Delete the descendents and their record in nodeByKey
 		stack := []*valueNode{node}
-		visited := map[*valueNode]bool{}
 		for len(stack) != 0 {
 			idx := len(stack) - 1
 			cur := stack[idx]
 			stack[idx] = nil
 			stack = stack[:idx]
-
-			if _, ok := visited[cur]; ok {
-				delete(h.nodeByKey, cur.Key)
-			} else {
-				visited[cur] = true
-				stack = append(stack, cur.Children...)
+			for _, child := range cur.Children {
+				delete(h.nodeByKey, child.Key)
 			}
+			stack = append(stack, cur.Children...)
 		}
 
 		h.cur.Value++
