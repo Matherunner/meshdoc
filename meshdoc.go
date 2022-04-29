@@ -49,6 +49,30 @@ func (t *Meshdoc) setInputFilesToContext(ctx *Context, files map[GenericPath]Fil
 	ctx.SetInputFiles(inputFiles)
 }
 
+func (t *Meshdoc) parseFiles(files map[GenericPath]FileReader) (treeByPath map[GenericPath]*tree.Tree, err error) {
+	treeByPath = map[GenericPath]*tree.Tree{}
+
+	for path, r := range files {
+		scanner := bufio.NewScanner(r)
+		lineScanner := NewLineScanner(scanner)
+
+		parser := t.newParser()
+		parser.Parse(lineScanner)
+
+		for _, msg := range parser.Messages().Messages() {
+			if msg.Kind == meshforce.MessageKindError {
+				// TODO: print all errors instead of just the first one?
+				err = fmt.Errorf("error when parsing %s: %s", path, msg.Name)
+				return
+			}
+		}
+
+		treeByPath[path] = parser.Tree()
+	}
+
+	return
+}
+
 func (t *Meshdoc) Run() (err error) {
 	ctx := NewContext()
 
@@ -67,23 +91,9 @@ func (t *Meshdoc) Run() (err error) {
 		}
 	}
 
-	treeByPath := map[GenericPath]*tree.Tree{}
-
-	for path, r := range files {
-		scanner := bufio.NewScanner(r)
-		lineScanner := NewLineScanner(scanner)
-
-		parser := t.newParser()
-		parser.Parse(lineScanner)
-
-		for _, msg := range parser.Messages().Messages() {
-			if msg.Kind == meshforce.MessageKindError {
-				// TODO: print all errors instead of just the first one?
-				return fmt.Errorf("error when parsing %s: %s", path, msg.Name)
-			}
-		}
-
-		treeByPath[path] = parser.Tree()
+	treeByPath, err := t.parseFiles(files)
+	if err != nil {
+		return
 	}
 
 	parsedReader := t.options.Components.ParsedReader(treeByPath)
