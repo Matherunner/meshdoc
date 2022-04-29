@@ -2,6 +2,7 @@ package toc
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -10,7 +11,8 @@ import (
 )
 
 var (
-	ErrUnknownFile = errors.New("unknown file defined in toc")
+	ErrUnknownFile   = errors.New("unknown file defined in toc")
+	ErrTitleNotFound = errors.New("title not found")
 )
 
 type Entry struct {
@@ -67,8 +69,14 @@ func (t *TOC) parseTOCList(ctx *meshdoc.Context, content string, r meshdoc.Parse
 		// Assume the entries all point to .mf files
 		p := meshdoc.NewGenericPath(fileName).SetExt(".mf")
 
+		title := t.extractTitle(p, r)
+		if title == nil {
+			err = fmt.Errorf("%w: %s", ErrTitleNotFound, p)
+			return
+		}
+
 		toc = append(toc, Entry{
-			Title: t.extractTitle(p, r),
+			Title: title,
 			Path:  p,
 		})
 	}

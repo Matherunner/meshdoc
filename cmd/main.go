@@ -7,6 +7,7 @@ import (
 	"github.com/Matherunner/meshdoc"
 	"github.com/Matherunner/meshdoc/htmldoc"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/counter"
+	"github.com/Matherunner/meshdoc/htmldoc/processors/math"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/theorem"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/toc"
 	"github.com/Matherunner/meshdoc/htmldoc/processors/xref"
@@ -53,6 +54,7 @@ func main() {
 				toc.NewTOC(),
 				counter.NewCounter(counterOptions),
 				xref.NewXRef(),
+				math.NewMathBatchRenderer(),
 			},
 		},
 	})

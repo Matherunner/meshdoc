@@ -115,6 +115,22 @@ func newNodeDefinitions() *nodeDefinitions {
 			Struct: meshforce.BlockStructLiteral,
 			Policy: meshforce.BlockPolicyReadUntilClose,
 		}, {
+			Name:   "C",
+			Struct: meshforce.BlockStructLiteral,
+			Policy: meshforce.BlockPolicyReadUntilClose,
+		}, {
+			Name:   "DL",
+			Struct: meshforce.BlockStructCompound,
+			Policy: meshforce.BlockPolicyReadUntilClose,
+		}, {
+			Name:   "DT",
+			Struct: meshforce.BlockStructSimple,
+			Policy: meshforce.BlockPolicyReadOne,
+		}, {
+			Name:   "DD",
+			Struct: meshforce.BlockStructSimple,
+			Policy: meshforce.BlockPolicyReadGreedy,
+		}, {
 			Name:   "MATH",
 			Struct: meshforce.BlockStructLiteral,
 			Policy: meshforce.BlockPolicyReadUntilClose,
