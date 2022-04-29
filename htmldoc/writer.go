@@ -1,12 +1,12 @@
 package htmldoc
 
 import (
-	"bytes"
 	"html/template"
 	"io"
 	"log"
 	"os"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/Matherunner/meshdoc"
@@ -100,7 +100,7 @@ func (w *DefaultBookWriter) getOutputFilePath(input meshdoc.GenericPath) string 
 }
 
 func (w *DefaultBookWriter) writeFile(ctx *meshdoc.Context, filePath string, tmpl *template.Template, parseTree *tree.Tree, navigations []navigation) (err error) {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	renderer := NewDefaultParsedWriter(ctx, w.getOutputFilePath)
 	err = renderer.Write(&buf, parseTree.Root())
 	if err != nil {
@@ -123,7 +123,7 @@ func (w *DefaultBookWriter) writeFile(ctx *meshdoc.Context, filePath string, tmp
 }
 
 func (w *DefaultBookWriter) renderSnippet(ctx *meshdoc.Context, root *tree.Node) (html string, err error) {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	renderer := NewDefaultParsedWriter(ctx, w.getOutputFilePath)
 	err = renderer.Write(&buf, root)
 	html = buf.String()
